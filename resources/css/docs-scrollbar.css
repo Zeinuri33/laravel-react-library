@@ -1,0 +1,80 @@
+/* =========================
+   MINIMAL SCROLLBAR
+========================= */
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    overflow-y: overlay;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+/* Chrome / Edge / Safari */
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.22);
+
+    border-radius: 999px;
+
+    border: 2px solid transparent;
+    background-clip: padding-box;
+
+    transition: background 0.25s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.38);
+
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.docs-sidebar::-webkit-scrollbar,
+.docs-toc::-webkit-scrollbar {
+    width: 6px;
+}
+
+.docs-sidebar::-webkit-scrollbar-thumb,
+.docs-toc::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.docs-sidebar::-webkit-scrollbar-thumb:hover,
+.docs-toc::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+/* =========================
+   DARK MODE REFINEMENT
+========================= */
+
+.dark *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+}

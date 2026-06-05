@@ -1,0 +1,243 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@import "./docs-scrollbar.css";
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Inter', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.87 0 0);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.87 0 0);
+}
+
+.dark {
+    --background: #030712;
+    --foreground: #f9fafb;
+
+    --card: #0f172a;
+    --card-foreground: #f9fafb;
+
+    --popover: #0f172a;
+    --popover-foreground: #f9fafb;
+
+    --primary: #f9fafb;
+    --primary-foreground: #111827;
+
+    --secondary: #1f2937;
+    --secondary-foreground: #f9fafb;
+
+    --muted: #1f2937;
+    --muted-foreground: #9ca3af;
+
+    --accent: #1f2937;
+    --accent-foreground: #f9fafb;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --border: #1f2937;
+    --input: #1f2937;
+
+    --ring: #6b7280;
+
+    --chart-1: #3b82f6;
+    --chart-2: #22c55e;
+    --chart-3: #f59e0b;
+    --chart-4: #a855f7;
+    --chart-5: #ef4444;
+
+    --sidebar: #10141e;
+    --sidebar-foreground: #f9fafb;
+
+    --sidebar-primary: #f9fafb;
+    --sidebar-primary-foreground: #f9fafb;
+
+    --sidebar-accent: #1f2937;
+    --sidebar-accent-foreground: #f9fafb;
+
+    --sidebar-border: #1f2937;
+    --sidebar-ring: #6b7280;
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+/* Tiptap Custom */
+.docs-content h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+}
+
+.docs-content h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: .75rem;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.docs-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: .75rem;
+}
+
+.docs-content ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.docs-content ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.docs-content li {
+    margin: .5rem 0;
+    line-height: 1.8;
+}
+
+.docs-content p {
+    margin: 1rem 0;
+}
+
+.docs-content img {
+    margin: 2rem auto;
+}
+
+.docs-content hr {
+    border-color: rgba(255,255,255,.1);
+    margin: 3rem 0;
+}
+
+.docs-content table {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 1rem;
+}
+
+.docs-content th {
+    background: rgba(255,255,255,.05);
+    font-weight: 700;
+}
+
+.docs-content th,
+.docs-content td {
+    padding: 1rem;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
