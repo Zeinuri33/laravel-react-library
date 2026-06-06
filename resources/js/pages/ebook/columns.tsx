@@ -245,48 +245,21 @@ export const columns = (
             const deskripsi = row.original.klasifikasi?.deskripsi
 
             return (
-                <div className="ms-4 hidden md:block space-y-1">
+                <div className="ms-3 hidden md:block space-y-1">
                     {/* BARIS 1 */}
                     <div className="font-medium">
-                        {limitWords(kategori, 2)}
+                        {limitWords(kategori, 3)}
                     </div>
 
                     {/* BARIS 2 */}
                     <div className="text-xs text-muted-foreground">
-                        {limitWords(deskripsi, 5)}
+                        {limitWords(deskripsi, 6)}
                     </div>
                 </div>
             )
         },
     },
-
-    {
-        accessorKey: "qty",
-
-        header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden sm:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
-                Qty
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
-        ),
-
-        cell: ({ row }) => (
-            <div className="ms-4 hidden sm:block">
-                <Badge>
-                    {row.original.qty}
-                </Badge>
-            </div>
-        ),
-    },
-
+    
     {
         id: "opsi",
 
