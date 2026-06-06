@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef   } from "react"
+import { useCallback, useState, useEffect, useRef   } from "react"
 import axios from "axios"
 import { Head, router, useForm, Link, usePage } from "@inertiajs/react"
-import { Check, ChevronsUpDown, Upload, X } from "lucide-react"
+import { Check, ChevronsUpDown, SearchX, Upload, X } from "lucide-react"
 import Heading from "@/components/heading"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +31,39 @@ import {
 } from "@/components/ui/command"
 
 import { cn } from "@/lib/utils"
+
+const ignoredTitleWords = new Set([
+    "buku",
+    "ebook",
+    "e-book",
+    "edisi",
+    "jilid",
+    "volume",
+    "vol",
+    "seri",
+    "panduan",
+    "dasar",
+    "pengantar",
+    "untuk",
+    "dan",
+    "atau",
+    "yang",
+    "dengan",
+    "dalam",
+    "pada",
+    "the",
+    "and",
+    "for",
+    "with",
+])
+
+const tokenize = (value: string | null | undefined) =>
+    (value ?? "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .split(" ")
+        .map((word) => word.trim())
+        .filter((word) => word.length > 2 && !ignoredTitleWords.has(word))
 
 export default function CreateEbook() {
     
@@ -64,6 +97,42 @@ export default function CreateEbook() {
     const { klasifikasis } = usePage<PageProps>().props
 
     const [showLeaveDialog, setShowLeaveDialog] = useState(false)
+
+    const manualKlasifikasiRef = useRef(false)
+    const autoSelectedKlasifikasiRef = useRef<string>("")
+
+    const findBestKlasifikasiByTitle = useCallback((title: string) => {
+        const titleTokens = tokenize(title)
+
+        if (titleTokens.length === 0) {
+            return null
+        }
+
+        let bestMatch: (typeof klasifikasis)[number] | null = null
+        let bestScore = 0
+
+        for (const item of klasifikasis) {
+            const kodeTokens = new Set(tokenize(item.kode))
+            const kategoriTokens = new Set(tokenize(item.kategori))
+            const deskripsiTokens = new Set(tokenize(item.deskripsi))
+
+            let score = 0
+
+            for (const token of titleTokens) {
+                if (kodeTokens.has(token)) score += 6
+                if (kategoriTokens.has(token)) score += 5
+                if (deskripsiTokens.has(token)) score += 2
+            }
+
+            if (score > bestScore) {
+                bestScore = score
+                bestMatch = item
+            }
+        }
+
+        return bestScore >= 5 ? bestMatch : null
+    }, [klasifikasis])
+
     const submit = (e: React.FormEvent) => {
         e.preventDefault()
 
@@ -90,6 +159,8 @@ export default function CreateEbook() {
     ) => {
         const file = e.target.files?.[0]
         if (!file) return
+        manualKlasifikasiRef.current = false
+        autoSelectedKlasifikasiRef.current = ""
         setData("file", file)
         setPdfPreview(
             URL.createObjectURL(file)
@@ -119,7 +190,6 @@ export default function CreateEbook() {
             setData("tahun_terbit", ebook.tahun_terbit ?? "")
             setData("penulis", ebook.penulis ?? "")
             setData("penerbit", ebook.penerbit ?? "")
-            setData("klasifikasi_id", ebook.klasifikasi_id ?? "")
             setData("deskripsi", ebook.deskripsi ?? "")
             setData("file_path", ebook.file_path)
 
@@ -177,6 +247,37 @@ export default function CreateEbook() {
 
     const bypassGuard = useRef(false)
     const pendingUrlRef = useRef<string | null>(null)
+
+    useEffect(() => {
+        if (manualKlasifikasiRef.current) return
+
+        const shouldAutoSelect =
+            !data.klasifikasi_id ||
+            data.klasifikasi_id === autoSelectedKlasifikasiRef.current
+
+        if (!shouldAutoSelect) return
+
+        const match = findBestKlasifikasiByTitle(data.judul)
+
+        if (!match) {
+            if (
+                data.klasifikasi_id &&
+                data.klasifikasi_id === autoSelectedKlasifikasiRef.current
+            ) {
+                autoSelectedKlasifikasiRef.current = ""
+                setData("klasifikasi_id", "")
+            }
+
+            return
+        }
+
+        const nextKlasifikasiId = String(match.id)
+
+        if (data.klasifikasi_id !== nextKlasifikasiId) {
+            autoSelectedKlasifikasiRef.current = nextKlasifikasiId
+            setData("klasifikasi_id", nextKlasifikasiId)
+        }
+    }, [data.judul, data.klasifikasi_id, findBestKlasifikasiByTitle])
 
     useEffect(() => {
         // =========================
@@ -269,6 +370,16 @@ export default function CreateEbook() {
                                         setData("file", null)
                                         setData("file_path", "")
                                         setData("cover_path", "")
+                                        setData("judul", "")
+                                        setData("isbn", "")
+                                        setData("eisbn", "")
+                                        setData("tahun_terbit", "")
+                                        setData("penulis", "")
+                                        setData("penerbit", "")
+                                        setData("klasifikasi_id", "")
+                                        setData("deskripsi", "")
+                                        manualKlasifikasiRef.current = false
+                                        autoSelectedKlasifikasiRef.current = ""
                                         setPdfPreview(null)
                                         setPreview(null)
                                     }}
@@ -463,8 +574,8 @@ export default function CreateEbook() {
                                         }
                                     }}
                                 >
-                                    <DialogContent className="max-w-2xl p-0">
-                                        <DialogHeader className="border-b px-6 py-4">
+                                    <DialogContent className="max-w-2xl overflow-hidden bg-background p-0">
+                                        <DialogHeader className="border-b bg-background px-6 py-4">
                                             <DialogTitle>
                                                 Pilih Klasifikasi
                                             </DialogTitle>
@@ -473,26 +584,43 @@ export default function CreateEbook() {
                                             </DialogDescription>
                                         </DialogHeader>
 
-                                        <Command shouldFilter={false} className="rounded-none">
+                                        <Command
+                                            shouldFilter={false}
+                                            className="rounded-none bg-background text-foreground [&_[data-slot=command-input-wrapper]]:h-11 [&_[data-slot=command-input-wrapper]]:bg-background [&_[data-slot=command-input]]:h-11 [&_[data-slot=command-input]]:py-0"
+                                        >
                                             <CommandInput
                                                 placeholder="Cari klasifikasi..."
                                                 value={search}
                                                 onValueChange={(value) => setSearch(value ?? "")}
                                             />
 
-                                            <CommandList className="max-h-[420px]">
+                                            <CommandList className="max-h-[420px] bg-background">
                                                 {filteredKlasifikasis.length === 0 ? (
-                                                    <CommandEmpty>
-                                                        Tidak ditemukan
+                                                    <CommandEmpty className="bg-background px-6 py-10">
+                                                        <div className="flex flex-col items-center gap-3 text-center">
+                                                            <div className="flex h-12 w-12 items-center justify-center rounded-full border bg-muted/40">
+                                                                <SearchX className="h-5 w-5 text-muted-foreground" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="font-medium text-foreground">
+                                                                    Tidak ditemukan
+                                                                </p>
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    Coba gunakan kata kunci lain atau cek kembali judul/kode klasifikasi.
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     </CommandEmpty>
                                                 ) : (
-                                                    <CommandGroup>
+                                                    <CommandGroup className="bg-background">
                                                         {filteredKlasifikasis.map((item) => (
                                                             <CommandItem
                                                                 key={item.id}
                                                                 value={String(item.id)}
-                                                                className="items-start py-3"
+                                                                className="items-start bg-background py-3 data-[selected=true]:bg-muted/70"
                                                                 onSelect={() => {
+                                                                    manualKlasifikasiRef.current = true
+                                                                    autoSelectedKlasifikasiRef.current = ""
                                                                     setData(
                                                                         "klasifikasi_id",
                                                                         String(item.id)

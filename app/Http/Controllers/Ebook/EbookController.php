@@ -415,7 +415,7 @@ class EbookController extends Controller
                 'tahun_terbit' => $ebook->tahun_terbit,
                 'penulis' => $ebook->penulis,
                 'penerbit' => $ebook->penerbit,
-                'kategori' => $ebook->kategori,
+                'klasifikasi_id' => $ebook->klasifikasi_id,
                 'deskripsi' => $ebook->deskripsi,
 
                 // URL preview
@@ -431,6 +431,7 @@ class EbookController extends Controller
                 'file_path' => $ebook->file,
                 'cover_path' => $ebook->cover,
             ],
+            'klasifikasis' => Ebook_klasifikasi::orderBy('kode')->get(),
         ]);
     }
 
@@ -445,7 +446,7 @@ class EbookController extends Controller
             'tahun_terbit' => ['nullable', 'string', 'max:10'],
             'penulis' => ['nullable', 'string', 'max:255'],
             'penerbit' => ['nullable', 'string', 'max:255'],
-            'kategori' => ['nullable', 'string', 'max:255'],
+            'klasifikasi_id' => ['nullable', 'integer'],
             'deskripsi' => ['nullable', 'string'],
             'file_path' => ['nullable', 'string'],
             'cover_path' => ['nullable', 'string'],
@@ -535,7 +536,7 @@ class EbookController extends Controller
             'tahun_terbit' => $validated['tahun_terbit'] ?? null,
             'penulis' => $validated['penulis'] ?? null,
             'penerbit' => $validated['penerbit'] ?? null,
-            'kategori' => $validated['kategori'] ?? null,
+            'klasifikasi_id' => $validated['klasifikasi_id'] ?? null,
             'deskripsi' => $validated['deskripsi'] ?? null,
             'file' => $filePath,
             'cover' => $coverPath,
