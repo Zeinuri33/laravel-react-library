@@ -586,7 +586,7 @@ export default function CreateEbook() {
 
                                         <Command
                                             shouldFilter={false}
-                                            className="rounded-none bg-background text-foreground [&_[data-slot=command-input-wrapper]]:h-11 [&_[data-slot=command-input-wrapper]]:bg-background [&_[data-slot=command-input]]:h-11 [&_[data-slot=command-input]]:py-0"
+                                            className="rounded-none  bg-background text-foreground [&_[data-slot=command-input-wrapper]]:h-11 [&_[data-slot=command-input-wrapper]]:bg-background [&_[data-slot=command-input]]:h-11 [&_[data-slot=command-input]]:py-0"
                                         >
                                             <CommandInput
                                                 placeholder="Cari klasifikasi..."

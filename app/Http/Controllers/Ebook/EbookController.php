@@ -261,8 +261,8 @@ class EbookController extends Controller
                 'ebook_klasifikasis.id'
             )
             ->select('ebooks.*')
-            ->orderBy('ebook_klasifikasis.kode')
-            ->get();
+            // ->orderBy('ebook_klasifikasis.kode')
+            ->latest()->get();
 
         return Inertia::render('ebook/page', [
             'ebooks' => $ebooks,
