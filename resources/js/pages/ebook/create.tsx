@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef   } from "react"
 import axios from "axios"
 import { Head, router, useForm, Link, usePage } from "@inertiajs/react"
-import {Upload,FileText,X, } from "lucide-react"
+import { Check, ChevronsUpDown, Upload, X } from "lucide-react"
 import Heading from "@/components/heading"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,10 +14,12 @@ import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 import {
     Command,
@@ -28,7 +30,6 @@ import {
     CommandList,
 } from "@/components/ui/command"
 
-import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function CreateEbook() {
@@ -44,7 +45,7 @@ export default function CreateEbook() {
 
 
     const {
-        data, setData, post, processing, reset, errors,
+        data, setData, post, processing, errors,
     } = useForm({
         judul: "", isbn: "", eisbn: "", tahun_terbit: "", penulis: "", penerbit: "", klasifikasi_id: "", deskripsi: "", cover: null as File | null, file: null as File | null,
         cover_path: "" as string,
@@ -63,9 +64,6 @@ export default function CreateEbook() {
     const { klasifikasis } = usePage<PageProps>().props
 
     const [showLeaveDialog, setShowLeaveDialog] = useState(false)
-    const [pendingUrl, setPendingUrl] = useState<string | null>(null)
-
-
     const submit = (e: React.FormEvent) => {
         e.preventDefault()
 
@@ -84,13 +82,6 @@ export default function CreateEbook() {
             },
         })
     }
-    const handleSuccess = () => {
-        toast.success(
-            `E-Book ${data.judul} berhasil ditambahkan`
-        )
-        router.visit("/list-ebooks")
-    }
-
     const [pdfPreview, setPdfPreview] =
     useState<string | null>(null)
 
@@ -156,6 +147,31 @@ export default function CreateEbook() {
     const [progress, setProgress] =
 
     useState(0)
+
+    const selectedKlasifikasi = klasifikasis.find(
+        (item) => String(item.id) === data.klasifikasi_id
+    )
+
+    const filteredKlasifikasis = klasifikasis.filter((item) => {
+        const keyword = (search || "")
+            .toLowerCase()
+            .trim()
+
+        const text = `${item.kode ?? ""} ${item.kategori ?? ""} ${item.deskripsi ?? ""}`
+            .toLowerCase()
+
+        if (!keyword) return true
+
+        if (text.includes(keyword)) return true
+
+        const tokens = keyword
+            .split(" ")
+            .filter(Boolean)
+
+        if (tokens.length === 0) return true
+
+        return tokens.some((token) => text.includes(token))
+    })
 
 
 
@@ -422,73 +438,60 @@ export default function CreateEbook() {
                             <div>
                                 <Label className="pb-2">Klasifikasi</Label>
 
-                                <Popover open={open} onOpenChange={setOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            className="w-full justify-between"
-                                        >
-                                            {data.klasifikasi_id
-                                                ? (() => {
-                                                    const selected = klasifikasis.find(
-                                                        (item) =>
-                                                            String(item.id) === data.klasifikasi_id
-                                                    )
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    role="combobox"
+                                    className="w-full justify-between"
+                                    onClick={() => setOpen(true)}
+                                >
+                                    <span className="truncate">
+                                        {selectedKlasifikasi
+                                            ? `${selectedKlasifikasi.kode} - ${selectedKlasifikasi.kategori}`
+                                            : "Pilih Klasifikasi"}
+                                    </span>
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
 
-                                                    return selected
-                                                        ? `${selected.kode} - ${selected.kategori}`
-                                                        : "Pilih Klasifikasi"
-                                                })()
-                                                : "Pilih Klasifikasi"}
+                                <Dialog
+                                    open={open}
+                                    onOpenChange={(nextOpen) => {
+                                        setOpen(nextOpen)
 
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
+                                        if (!nextOpen) {
+                                            setSearch("")
+                                        }
+                                    }}
+                                >
+                                    <DialogContent className="max-w-2xl p-0">
+                                        <DialogHeader className="border-b px-6 py-4">
+                                            <DialogTitle>
+                                                Pilih Klasifikasi
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Cari berdasarkan kode, kategori, atau deskripsi klasifikasi.
+                                            </DialogDescription>
+                                        </DialogHeader>
 
-                                    <PopoverContent className="w-full p-0">
-                                        <Command shouldFilter={false}>
-                                            {/* SEARCH INPUT */}
+                                        <Command shouldFilter={false} className="rounded-none">
                                             <CommandInput
                                                 placeholder="Cari klasifikasi..."
                                                 value={search}
-                                                onValueChange={(v) => setSearch(v ?? "")}
+                                                onValueChange={(value) => setSearch(value ?? "")}
                                             />
 
-                                            <CommandList>
-                                                <CommandEmpty>Tidak ditemukan</CommandEmpty>
-
-                                                <CommandGroup>
-                                                    {klasifikasis
-                                                        .filter((item) => {
-                                                            const keyword = (search || "")
-                                                                .toLowerCase()
-                                                                .trim()
-
-                                                            const text = `${item.kode ?? ""} ${item.kategori ?? ""} ${item.deskripsi ?? ""}`
-                                                                .toLowerCase()
-
-                                                            // 🔥 kalau kosong → tampil semua
-                                                            if (!keyword) return true
-
-                                                            // 🔥 match langsung
-                                                            if (text.includes(keyword)) return true
-
-                                                            // 🔥 split aman
-                                                            const tokens = keyword
-                                                                .split(" ")
-                                                                .filter(Boolean)
-
-                                                            // kalau tidak ada token → tetap tampil
-                                                            if (tokens.length === 0) return true
-
-                                                            // 🔥 longgar: salah satu match cukup
-                                                            return tokens.some((t) => text.includes(t))
-                                                        })
-                                                        .map((item) => (
+                                            <CommandList className="max-h-[420px]">
+                                                {filteredKlasifikasis.length === 0 ? (
+                                                    <CommandEmpty>
+                                                        Tidak ditemukan
+                                                    </CommandEmpty>
+                                                ) : (
+                                                    <CommandGroup>
+                                                        {filteredKlasifikasis.map((item) => (
                                                             <CommandItem
                                                                 key={item.id}
                                                                 value={String(item.id)}
+                                                                className="items-start py-3"
                                                                 onSelect={() => {
                                                                     setData(
                                                                         "klasifikasi_id",
@@ -500,21 +503,31 @@ export default function CreateEbook() {
                                                             >
                                                                 <Check
                                                                     className={cn(
-                                                                        "mr-2 h-4 w-4",
+                                                                        "mt-0.5 mr-2 h-4 w-4",
                                                                         data.klasifikasi_id ===
                                                                             String(item.id)
                                                                             ? "opacity-100"
                                                                             : "opacity-0"
                                                                     )}
                                                                 />
-                                                                {item.kode} - {item.kategori}
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="font-medium">
+                                                                        {item.kode} - {item.kategori}
+                                                                    </div>
+                                                                    {item.deskripsi && (
+                                                                        <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                                                            {item.deskripsi}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </CommandItem>
                                                         ))}
-                                                </CommandGroup>
+                                                    </CommandGroup>
+                                                )}
                                             </CommandList>
                                         </Command>
-                                    </PopoverContent>
-                                </Popover>
+                                    </DialogContent>
+                                </Dialog>
 
                                 {errors.klasifikasi_id && (
                                     <p className="mt-1 text-sm text-red-500">
