@@ -38,34 +38,38 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+
+
+type Klasifikasi = {
+    id: number
+    kategori: string
+    deskripsi: string
+}
+
 export type Ebook = {
     id: number
-
     cover?: string
-
     file?: string
-
     judul: string
-
     isbn?: string
-
     eisbn?: string
-
     tahun_terbit?: number
-
     penulis?: string
-
     penerbit?: string
-
-    kategori?: string
-
     qty: number
-
     deskripsi?: string
-
     created_at: string
-
     updated_at: string
+
+    klasifikasi?: Klasifikasi | null   // 👈 TAMBAH INI
+}
+
+const limitWords = (text?: string, limit = 5) => {
+    if (!text) return "-"
+    const words = text.split(" ")
+    return words.length > limit
+        ? words.slice(0, limit).join(" ") + "..."
+        : text
 }
 
 const handleDelete = (ebook: Ebook) => {
@@ -220,16 +224,15 @@ export const columns = (
     },
 
     {
-        accessorKey: "kategori",
+        accessorFn: (row) => row.klasifikasi?.kategori,
+        id: "kategori",
 
         header: ({ column }) => (
             <Button
                 variant="ghost"
                 className="hidden md:flex"
                 onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
+                    column.toggleSorting(column.getIsSorted() === "asc")
                 }
             >
                 Kategori
@@ -237,14 +240,24 @@ export const columns = (
             </Button>
         ),
 
-        cell: ({ row }) => (
-            <div className=" ms-4 hidden md:block">
-                <Badge variant="secondary">
-                    {row.original.kategori ||
-                        "-"}
-                </Badge>
-            </div>
-        ),
+        cell: ({ row }) => {
+            const kategori = row.original.klasifikasi?.kategori
+            const deskripsi = row.original.klasifikasi?.deskripsi
+
+            return (
+                <div className="ms-4 hidden md:block space-y-1">
+                    {/* BARIS 1 */}
+                    <div className="font-medium">
+                        {limitWords(kategori, 2)}
+                    </div>
+
+                    {/* BARIS 2 */}
+                    <div className="text-xs text-muted-foreground">
+                        {limitWords(deskripsi, 5)}
+                    </div>
+                </div>
+            )
+        },
     },
 
     {
