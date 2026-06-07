@@ -46,7 +46,7 @@ const handleDelete = (
     klasifikasi: EbookKlasifikasi
 ) => {
     router.delete(
-        `/ebook-klasifikasi/${klasifikasi.id}`,
+        `/klasifikasi-ebooks/${klasifikasi.id}`,
         {
             onSuccess: () => {
                 toast.success(
@@ -115,6 +115,12 @@ export const columns = (
                 <ChevronsUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
+
+        cell: ({ row }) => (
+            <div className="ms-3">
+                {row.original.kode ?? "-"}
+            </div>
+        ),
     },
 
     {
@@ -135,7 +141,7 @@ export const columns = (
         ),
 
         cell: ({ row }) => (
-            <div>
+            <div className="ms-3">
                 {row.original.kategori ?? "-"}
             </div>
         ),
@@ -159,7 +165,7 @@ export const columns = (
         ),
 
         cell: ({ row }) => (
-            <div className="max-w-md truncate">
+            <div className="ms-3 max-w-md truncate">
                 {row.original.deskripsi}
             </div>
         ),

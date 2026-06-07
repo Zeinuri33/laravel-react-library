@@ -39,7 +39,7 @@ export default function CreateKlasifikasiModal() {
         e.preventDefault()
 
         router.post(
-            "/ebook-klasifikasi",
+            "/klasifikasi-ebooks",
             data,
             {
                 onSuccess: () => {

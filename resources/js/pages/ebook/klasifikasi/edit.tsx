@@ -70,7 +70,7 @@ export default function EditKlasifikasiModal({
         if (!dataKlasifikasi) return
 
         router.put(
-            `/ebook-klasifikasi/${dataKlasifikasi.id}`,
+            `/klasifikasi-ebooks/${dataKlasifikasi.id}`,
             data,
             {
                 onSuccess: () => {
