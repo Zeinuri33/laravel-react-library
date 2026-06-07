@@ -1,14 +1,15 @@
 import { Link, usePage } from '@inertiajs/react'
-import { 
-    BookOpen, 
-    FolderGit2, 
-    LayoutGrid, 
-    Users, 
+import {
+    BookOpen,
+    FolderGit2,
+    LayoutGrid,
+    Users,
     GraduationCap,
     FileSearch,
     Notebook,
     MessageCircleReply,
-    BookHeadphones
+    BookHeadphones,
+    MapPin
  } from 'lucide-react'
 import AppLogo from '@/components/app-logo'
 import { NavFooter } from '@/components/nav-footer'
@@ -45,9 +46,9 @@ export function AppSidebar() {
     const permissions = auth?.permissions ?? []
 
     const can = (perm: string) => permissions.includes(perm)
-    
 
-    // children 
+
+    // children
     const userChildren = [
         ...(can('lihat-user') ? [{ title: 'List Pengguna', href: '/users' }] : []),
         ...(can('lihat-role') ? [{ title: 'Role', href: '/roles' }] : []),
@@ -66,7 +67,7 @@ export function AppSidebar() {
     ]
 
     const ebookChildren = [
-        ...(can('lihat-ebook') ? [{ title: 'List E-Book', href: '/list-ebooks' }] : []),
+        ...(can('lihat-ebook') ? [{ title: 'E-Book', href: '/list-ebooks' }] : []),
         ...(can('lihat-klasifikasi_ebook') ? [{ title: 'Klasifikasi', href: '/klasifikasi-ebooks' }] : []),
     ]
 
@@ -84,7 +85,7 @@ export function AppSidebar() {
         {
             label: "Layanan",
             items: [
-                
+
                 {
                     title: 'Panduan',
                     href: "/dokumentasi",
@@ -97,8 +98,8 @@ export function AppSidebar() {
                 },
                 ...(ebookChildren.length > 0
                     ? [{
-                        title: 'E-Books',
-                        icon: BookHeadphones,
+                        title: 'Titik Baca',
+                        icon: MapPin,
                         children: ebookChildren,
                     }]
                     : []),
@@ -116,7 +117,7 @@ export function AppSidebar() {
                     : []),
 
 
-                
+
                 ...(universitasChildren.length > 0
                     ? [{
                         title: 'Universitas',
@@ -124,10 +125,10 @@ export function AppSidebar() {
                         children: universitasChildren,
                     }]
                     : []),
-                
+
             ]
         },
-        
+
     ]
 
     return (

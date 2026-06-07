@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\dokumentasi\DokumentasiController;
 use App\Http\Controllers\Ebook\EbookController;
+use App\Http\Controllers\Ebook\EbookKlasifikasiController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UsulanController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+
 
 
 
@@ -120,15 +122,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:hapus-usulan')
         ->name('usulan.destroy');
 
+
     // EBOOK
     Route::get('/list-ebooks', [EbookController::class, 'index'])
         ->middleware('permission:lihat-ebook')
         ->name('ebooks.index');
-
     Route::post('/ebooks/extract', [EbookController::class, 'extract'])
         ->middleware('auth');
     Route::post('/ebooks/cleanup-temp', [EbookController::class, 'cleanupTemp']);
-
     Route::get('/list-ebooks/create', [EbookController::class, 'create'])
         ->name('ebooks.create')
         ->middleware('permission:tambah-ebook');
@@ -139,10 +140,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/list-ebooks/{ebook}', [EbookController::class, 'update'])
         ->middleware('permission:edit-ebook')
         ->name('ebooks.update');
-
     Route::delete('/list-ebooks/{ebook}', [EbookController::class, 'destroy'])
         ->middleware('permission:hapus-ebook')
         ->name('ebooks.destroy');
+
+    //
+    Route::get('/klasifikasi-ebooks', [EbookKlasifikasiController::class, 'index'])
+        ->middleware('permission:lihat-klasifikasi_ebook');
+    Route::post('/klasifikasi-ebooks', [EbookKlasifikasiController::class, 'store'])
+        ->middleware('permission:tambah-klasifikasi_ebook');
+    Route::put('/klasifikasi-ebooks/{klasifikasi_ebook}', [EbookKlasifikasiController::class, 'update'])
+        ->middleware('permission:edit-klasifikasi_ebook')
+        ->name('klasifikasi-ebooks.update');
+    Route::delete('/klasifikasi-ebooks/{klasifikasi_ebook}', [EbookKlasifikasiController::class, 'destroy'])
+        ->middleware('permission:hapus-klasifikasi_ebook')
+        ->name('klasifikasi-ebooks.destroy');
+
 
 
 
