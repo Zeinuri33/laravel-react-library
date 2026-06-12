@@ -6,7 +6,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from '@/context/ThemeContext';
-
+import "leaflet/dist/leaflet.css";
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

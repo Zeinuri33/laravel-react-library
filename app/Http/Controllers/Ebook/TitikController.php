@@ -42,7 +42,7 @@ class TitikController extends Controller
 
     public function edit(Ebook_titik_baca $ebook)
     {
-        return Inertia::render('titik-ebooks/edit', [
+        return Inertia::render('ebook/titikbaca/edit', [
             'titik' => $ebook,
         ]);
     }

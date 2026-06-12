@@ -52,7 +52,6 @@ const handleDelete = (titik: Titik) => {
                 "Titik baca berhasil dihapus"
             )
         },
-
         onError: () => {
             toast.error(
                 "Gagal menghapus titik baca"
@@ -61,9 +60,7 @@ const handleDelete = (titik: Titik) => {
     })
 }
 
-export const columns = (
-    onEdit: (titik: Titik) => void
-): ColumnDef<Titik>[] => [
+export const columns: ColumnDef<Titik>[] = [
     {
         id: "select",
 
@@ -115,13 +112,11 @@ export const columns = (
 
     {
         accessorKey: "latitude",
-
         header: "Latitude",
     },
 
     {
         accessorKey: "longitude",
-
         header: "Longitude",
     },
 
@@ -176,12 +171,12 @@ export const columns = (
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem
-                            onClick={() =>
-                                onEdit(row.original)
-                            }
-                        >
-                            Edit
+                        <DropdownMenuItem asChild>
+                            <Link
+                                href={`/titik-ebooks/${row.original.id}/edit`}
+                            >
+                                Edit
+                            </Link>
                         </DropdownMenuItem>
 
                         <AlertDialog>

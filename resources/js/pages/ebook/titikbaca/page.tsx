@@ -47,7 +47,7 @@ export default function Page({
                 </div>
 
                 <DataTable
-                    columns={columns(handleEdit)}
+                    columns={columns}
                     data={titiks}
                 />
             </div>
