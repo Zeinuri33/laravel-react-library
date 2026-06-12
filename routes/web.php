@@ -3,6 +3,7 @@
 use App\Http\Controllers\dokumentasi\DokumentasiController;
 use App\Http\Controllers\Ebook\EbookController;
 use App\Http\Controllers\Ebook\EbookKlasifikasiController;
+use App\Http\Controllers\Ebook\TitikController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -156,7 +157,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:hapus-klasifikasi_ebook')
         ->name('klasifikasi-ebooks.destroy');
 
-
+    //
+    Route::get('/titik-ebooks', [TitikController::class, 'index'])->middleware('permission:lihat-titik_ebook');
+    Route::get('/titik-ebooks/create', [TitikController::class, 'create'])->middleware('permission:tambah-titik_ebook');
+    Route::post('/titik-ebooks', [TitikController::class, 'store'])->middleware('permission:tambah-titik_ebook');
+    Route::get('/titik-ebooks/{ebook}/edit',[TitikController::class, 'edit'])->middleware('permission:edit-titik_ebook');
+    Route::put('/titik-ebooks/{ebook}', [TitikController::class, 'update'])->middleware('permission:edit-titik_ebook');
+    Route::delete('/titik-ebooks/{ebook}', [TitikController::class, 'destroy'])->middleware('permission:hapus-titik_ebook');
 
 
 
