@@ -69,6 +69,7 @@ export function AppSidebar() {
     const ebookChildren = [
         ...(can('lihat-ebook') ? [{ title: 'E-Book', href: '/list-ebooks' }] : []),
         ...(can('lihat-klasifikasi_ebook') ? [{ title: 'Klasifikasi', href: '/klasifikasi-ebooks' }] : []),
+        ...(can('lihat-titik_ebook') ? [{ title: 'Titik Baca', href: '/titik-ebooks' }] : []),
     ]
 
     const groups = [
