@@ -108,6 +108,12 @@ export const columns: ColumnDef<Titik>[] = [
                 <ChevronsUpDown className="ml-2 h-4 w-4" />
             </Button>
         ),
+        cell: ({ row }) => (
+            <div className="ms-3">
+                {row.original.nama}
+            </div>
+        ),
+
     },
 
     {
