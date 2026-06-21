@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Ebook;
 
 use App\Http\Controllers\Controller;
+use App\Models\Ebooks\EbookBacaHistory;
 use App\Models\Ebooks\Ebook_klasifikasi;
+use App\Models\Ebooks\Ebook_titik_baca;
 use Illuminate\Http\Request;
 use App\Models\Ebooks\Ebook;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Smalot\PdfParser\Parser;
 use Spatie\PdfToImage\Pdf;
@@ -546,6 +548,148 @@ class EbookController extends Controller
             ->with('success', 'E-Book berhasil diperbarui');
     }
 
+
+    public function titikBaca()
+    {
+        $ebooks = Ebook::with('klasifikasi')
+            ->withCount('bacaHistories')
+            ->where('is_active', true)
+            ->latest()
+            ->get();
+
+        $titiks = Ebook_titik_baca::where('is_active', true)->get();
+
+        return Inertia::render('titikbaca', [
+            'ebooks' => $ebooks,
+            'titiks' => $titiks,
+        ]);
+    }
+
+    public function baca(Ebook $ebook)
+    {
+        $ebook->load('klasifikasi');
+        $ebook->loadCount('bacaHistories');
+
+        $totalMenit = (int) ceil(
+            EbookBacaHistory::where('ebook_id', $ebook->id)->sum('duration_seconds') / 60
+        );
+
+        return Inertia::render('ebook/baca', [
+            'ebook' => [
+                'id' => $ebook->id,
+                'judul' => $ebook->judul,
+                'penulis' => $ebook->penulis,
+                'penerbit' => $ebook->penerbit,
+                'tahun_terbit' => $ebook->tahun_terbit,
+                'deskripsi' => $ebook->deskripsi,
+                'cover' => $ebook->cover ? asset('storage/' . $ebook->cover) : null,
+                'file' => $ebook->file ? asset('storage/' . $ebook->file) : null,
+                'klasifikasi' => $ebook->klasifikasi,
+                'total_dibaca' => $ebook->baca_histories_count,
+                'total_menit_baca' => $totalMenit,
+            ],
+        ]);
+    }
+
+    public function startSession(Request $request)
+    {
+        $validated = $request->validate([
+            'ebook_id' => ['required', 'exists:ebooks,id'],
+        ]);
+
+        $sessionId = Str::uuid()->toString();
+
+        $history = EbookBacaHistory::create([
+            'ebook_id' => $validated['ebook_id'],
+            'session_id' => $sessionId,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'started_at' => now(),
+            'last_heartbeat_at' => now(),
+        ]);
+
+        return response()->json([
+            'session_id' => $sessionId,
+            'history_id' => $history->id,
+        ]);
+    }
+
+    public function heartbeat(Request $request)
+    {
+        $validated = $request->validate([
+            'session_id' => ['required', 'string'],
+            'current_page' => ['required', 'integer', 'min:1'],
+            'total_pages' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $history = EbookBacaHistory::where('session_id', $validated['session_id'])
+            ->whereNull('ended_at')
+            ->first();
+
+        if (!$history) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        $now = now();
+        $lastHeartbeat = $history->last_heartbeat_at;
+
+        if ($lastHeartbeat) {
+            $secondsSinceLastBeat = $lastHeartbeat->diffInSeconds($now);
+            // Only count if reasonable (max 120 seconds between beats)
+            if ($secondsSinceLastBeat > 0 && $secondsSinceLastBeat <= 120) {
+                $history->increment('duration_seconds', $secondsSinceLastBeat);
+            }
+        }
+
+        $history->update([
+            'last_heartbeat_at' => $now,
+            'total_pages_viewed' => $validated['total_pages'],
+            'max_page_reached' => max($history->max_page_reached, $validated['current_page']),
+        ]);
+
+        $totalSeconds = EbookBacaHistory::where('ebook_id', $history->ebook_id)->sum('duration_seconds');
+
+        return response()->json([
+            'session_duration_seconds' => $history->duration_seconds,
+            'total_menit_baca' => (int) ceil($totalSeconds / 60),
+        ]);
+    }
+
+    public function endSession(Request $request)
+    {
+        $validated = $request->validate([
+            'session_id' => ['required', 'string'],
+            'current_page' => ['required', 'integer', 'min:1'],
+            'total_pages' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $history = EbookBacaHistory::where('session_id', $validated['session_id'])
+            ->whereNull('ended_at')
+            ->first();
+
+        if (!$history) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        $now = now();
+        $lastHeartbeat = $history->last_heartbeat_at;
+
+        if ($lastHeartbeat) {
+            $secondsSinceLastBeat = $lastHeartbeat->diffInSeconds($now);
+            if ($secondsSinceLastBeat > 0 && $secondsSinceLastBeat <= 120) {
+                $history->increment('duration_seconds', $secondsSinceLastBeat);
+            }
+        }
+
+        $history->update([
+            'last_heartbeat_at' => $now,
+            'ended_at' => $now,
+            'total_pages_viewed' => $validated['total_pages'],
+            'max_page_reached' => max($history->max_page_reached, $validated['current_page']),
+        ]);
+
+        return response()->json(['status' => 'ok']);
+    }
 
     public function destroy(Ebook $ebook)
     {

@@ -2,7 +2,7 @@
 
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, login } from '@/routes';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppearanceTabs from '@/components/appearance-tabs';
@@ -53,11 +53,7 @@ const COLOR_PRESETS = [
     },
 ];
 
-export default function Welcome({
-    canRegister = true,
-}: {
-    canRegister?: boolean;
-}) {
+export default function Welcome() {
     const [inputValue, setInputValue] = useState('');
     const { themeAccent, setThemeAccent } = useTheme();
 

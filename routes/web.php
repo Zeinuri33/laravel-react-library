@@ -4,19 +4,22 @@ use App\Http\Controllers\dokumentasi\DokumentasiController;
 use App\Http\Controllers\Ebook\EbookController;
 use App\Http\Controllers\Ebook\EbookKlasifikasiController;
 use App\Http\Controllers\Ebook\TitikController;
+use App\Http\Controllers\Ebook\EbookUserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UsulanController;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 use App\Http\Controllers\DashboardController;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::inertia('/', 'welcome')->name('home');
 Route::inertia('result', 'result')->name('result');
 Route::get('/docs/{slug?}', [DokumentasiController::class, 'docs']);
+Route::get('/titikbaca', [EbookController::class, 'titikBaca']);
+Route::get('/titikbaca/{ebook}/baca', [EbookController::class, 'baca']);
+Route::post('/titikbaca/start-session', [EbookController::class, 'startSession']);
+Route::post('/titikbaca/heartbeat', [EbookController::class, 'heartbeat']);
+Route::post('/titikbaca/end-session', [EbookController::class, 'endSession']);
 
 //USULAN
 Route::post('/usulan', [UsulanController::class, 'store'])->name('usulan.store');
@@ -159,6 +162,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/titik-ebooks/{ebook}', [TitikController::class, 'update'])->middleware('permission:edit-titik_ebook');
     Route::delete('/titik-ebooks/{ebook}', [TitikController::class, 'destroy'])->middleware('permission:hapus-titik_ebook');
 
+    // EBOOK USERS
+    Route::get('/ebook-users', [EbookUserController::class, 'index'])->middleware('permission:lihat-ebook_user');
+    Route::get('/ebook-users/create', [EbookUserController::class, 'create'])->middleware('permission:tambah-ebook_user');
+    Route::post('/ebook-users', [EbookUserController::class, 'store'])->middleware('permission:tambah-ebook_user');
+    Route::get('/ebook-users/{ebook_user}/edit', [EbookUserController::class, 'edit'])->middleware('permission:edit-ebook_user');
+    Route::put('/ebook-users/{ebook_user}', [EbookUserController::class, 'update'])->middleware('permission:edit-ebook_user');
+    Route::delete('/ebook-users/{ebook_user}', [EbookUserController::class, 'destroy'])->middleware('permission:hapus-ebook_user');
 
 
     /**

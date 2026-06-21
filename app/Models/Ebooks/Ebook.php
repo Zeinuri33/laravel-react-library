@@ -14,4 +14,19 @@ class Ebook extends Model
     {
         return $this->belongsTo(Ebook_klasifikasi::class, 'klasifikasi_id');
     }
+
+    public function bacaHistories()
+    {
+        return $this->hasMany(EbookBacaHistory::class);
+    }
+
+    public function getTotalDibacaAttribute()
+    {
+        return $this->bacaHistories()->count();
+    }
+
+    public function getTotalMenitBacaAttribute()
+    {
+        return (int) ceil($this->bacaHistories()->sum('duration_seconds') / 60);
+    }
 }
