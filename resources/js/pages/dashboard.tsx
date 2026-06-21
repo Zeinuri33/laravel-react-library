@@ -1,40 +1,51 @@
 import { Head } from '@inertiajs/react';
 import { dashboard } from '@/routes';
-import { BookOpen, BookMarked, Users, MessageCircleReply, ArrowUpRight, Library, TrendingUp } from 'lucide-react';
+import { BookOpen, BookMarked, Users, MessageCircleReply, ArrowUpRight, Library, TrendingUp, ArrowUp } from 'lucide-react';
 
-export default function Dashboard() {
+interface DashboardProps {
+    totalEbooks?: number;
+    totalDokumentasi?: number;
+    totalUsers?: number;
+    totalUsulan?: number;
+}
+
+export default function Dashboard({ totalEbooks, totalDokumentasi, totalUsers, totalUsulan }: DashboardProps) {
     const stats = [
         {
             title: 'Total E-Book',
-            value: '—',
+            value: totalEbooks ?? '—',
             icon: BookMarked,
             color: 'from-emerald-500/20 to-emerald-600/10',
             iconColor: 'text-emerald-600 dark:text-emerald-400',
             bgIcon: 'bg-emerald-100 dark:bg-emerald-900/30',
+            trend: totalEbooks && totalEbooks > 0 ? 'up' : 'neutral' as const,
         },
         {
             title: 'Dokumentasi',
-            value: '—',
+            value: totalDokumentasi ?? '—',
             icon: BookOpen,
             color: 'from-blue-500/20 to-blue-600/10',
             iconColor: 'text-blue-600 dark:text-blue-400',
             bgIcon: 'bg-blue-100 dark:bg-blue-900/30',
+            trend: totalDokumentasi && totalDokumentasi > 0 ? 'up' : 'neutral' as const,
         },
         {
             title: 'Pengguna',
-            value: '—',
+            value: totalUsers ?? '—',
             icon: Users,
             color: 'from-violet-500/20 to-violet-600/10',
             iconColor: 'text-violet-600 dark:text-violet-400',
             bgIcon: 'bg-violet-100 dark:bg-violet-900/30',
+            trend: totalUsers && totalUsers > 0 ? 'up' : 'neutral' as const,
         },
         {
             title: 'Usulan Masuk',
-            value: '—',
+            value: totalUsulan ?? '—',
             icon: MessageCircleReply,
             color: 'from-amber-500/20 to-amber-600/10',
             iconColor: 'text-amber-600 dark:text-amber-400',
             bgIcon: 'bg-amber-100 dark:bg-amber-900/30',
+            trend: totalUsulan && totalUsulan > 0 ? 'up' : 'neutral' as const,
         },
     ];
 
@@ -68,7 +79,7 @@ export default function Dashboard() {
                                             {stat.title}
                                         </p>
                                         <p className="text-3xl font-bold tracking-tight">
-                                            {stat.value}
+                                            {typeof stat.value === 'number' ? stat.value.toLocaleString('id-ID') : stat.value}
                                         </p>
                                     </div>
 
@@ -79,8 +90,12 @@ export default function Dashboard() {
 
                                 {/* Trend indicator */}
                                 <div className="relative z-10 mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                                    <span>Data real-time</span>
+                                    {stat.trend === 'up' ? (
+                                        <ArrowUp className="h-3.5 w-3.5 text-emerald-500" />
+                                    ) : (
+                                        <TrendingUp className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                    )}
+                                    <span>{typeof stat.value === 'number' ? 'Tersedia' : 'Memuat...'}</span>
                                 </div>
                             </div>
                         );

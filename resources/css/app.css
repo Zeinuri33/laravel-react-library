@@ -216,6 +216,22 @@
     }
 }
 
+/* Subtle dot grid background utilities */
+@utility bg-dot-grid {
+    background-image: radial-gradient(circle, var(--dot-color, oklch(0.6 0.01 260 / 0.12)) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+@utility bg-dot-grid-sm {
+    background-image: radial-gradient(circle, var(--dot-color, oklch(0.6 0.01 260 / 0.12)) 1px, transparent 1px);
+    background-size: 16px 16px;
+}
+
+@utility bg-dot-grid-lg {
+    background-image: radial-gradient(circle, var(--dot-color, oklch(0.6 0.01 260 / 0.12)) 1.5px, transparent 1.5px);
+    background-size: 32px 32px;
+}
+
 /* Glass morphism utility for modals and cards */
 @utility glass {
     background: oklch(1 0 0 / 0.7);

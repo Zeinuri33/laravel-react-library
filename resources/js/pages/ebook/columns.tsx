@@ -2,13 +2,13 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import {
-    ChevronsUpDown,
     MoreHorizontal,
 } from "lucide-react"
 
 import { router, Link } from "@inertiajs/react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { DataTableSortHeader } from "@/components/data-table-sort-header"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -128,17 +128,9 @@ export const columns = (
         accessorKey: "judul",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column}>
                 E-Book
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -176,18 +168,9 @@ export const columns = (
         accessorKey: "isbn",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden lg:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden lg:flex">
                 ISBN
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -201,18 +184,9 @@ export const columns = (
         accessorKey: "tahun_terbit",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden md:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden md:flex">
                 Tahun
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -228,16 +202,9 @@ export const columns = (
         id: "kategori",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden md:flex"
-                onClick={() =>
-                    column.toggleSorting(column.getIsSorted() === "asc")
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden md:flex">
                 Kategori
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => {

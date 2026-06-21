@@ -1,9 +1,10 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { ChevronsUpDown, MoreHorizontal } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DataTableSortHeader } from "@/components/data-table-sort-header"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -123,15 +124,9 @@ export const columns = (
   {
     accessorKey: "nama",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
+      <DataTableSortHeader column={column}>
         Nama
-        <ChevronsUpDown />
-      </Button>
+      </DataTableSortHeader>
     ),
     cell: ({ row }) => (
       <div className="ml-3 font-medium">
@@ -180,15 +175,9 @@ export const columns = (
     id: "prodi",
     accessorFn: (row) => row.prodi?.prodi,
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
+      <DataTableSortHeader column={column}>
         Prodi
-        <ChevronsUpDown />
-      </Button>
+      </DataTableSortHeader>
     ),
     cell: ({ row }) => (
       <div className="ml-3">
@@ -201,15 +190,9 @@ export const columns = (
   id: "fakultas",
     accessorFn: (row) => row.prodi?.fakultas?.fakultas ?? "-",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
+      <DataTableSortHeader column={column}>
         Fakultas
-        <ChevronsUpDown />
-      </Button>
+      </DataTableSortHeader>
     ),
     cell: ({ row }) => {
       const namaFakultas =

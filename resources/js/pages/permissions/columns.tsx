@@ -1,9 +1,10 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { ChevronsUpDown, MoreHorizontal } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DataTableSortHeader } from "@/components/data-table-sort-header"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -109,15 +110,9 @@ export const columns = (
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
+      <DataTableSortHeader column={column}>
         Nama Permission
-        <ChevronsUpDown />
-      </Button>
+      </DataTableSortHeader>
     ),
     cell: ({ row }) => (
       <div className="ml-3 font-medium">
@@ -132,16 +127,9 @@ export const columns = (
   {
     accessorKey: "created_at",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        className="hidden md:flex"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
+      <DataTableSortHeader column={column} className="hidden md:flex">
         Dibuat
-        <ChevronsUpDown />
-      </Button>
+      </DataTableSortHeader>
     ),
     sortingFn: (rowA, rowB) => {
       const a = new Date(rowA.getValue("created_at")).getTime()
@@ -169,16 +157,9 @@ export const columns = (
   {
     accessorKey: "updated_at",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        className="hidden md:flex"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
+      <DataTableSortHeader column={column} className="hidden md:flex">
         Diperbarui
-        <ChevronsUpDown />
-      </Button>
+      </DataTableSortHeader>
     ),
     sortingFn: (rowA, rowB) => {
       const a = new Date(rowA.getValue("updated_at")).getTime()

@@ -2,7 +2,6 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import {
-    ChevronsUpDown,
     Folder,
     MoreHorizontal,
 } from "lucide-react"
@@ -11,6 +10,7 @@ import { router } from "@inertiajs/react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { DataTableSortHeader } from "@/components/data-table-sort-header"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -130,17 +130,9 @@ export const columns = (
         accessorKey: "judul",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column}>
                 Judul
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -185,18 +177,9 @@ export const columns = (
         accessorKey: "created_at",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden md:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden md:flex">
                 Dibuat
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         sortingFn: (rowA, rowB) => {

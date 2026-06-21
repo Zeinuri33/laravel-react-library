@@ -2,7 +2,6 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import {
-    ChevronsUpDown,
     MoreHorizontal,
 } from "lucide-react"
 
@@ -10,6 +9,7 @@ import { router, Link } from "@inertiajs/react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { DataTableSortHeader } from "@/components/data-table-sort-header"
 import { Checkbox } from "@/components/ui/checkbox"
 
 import {
@@ -103,17 +103,9 @@ export const columns = (
         accessorKey: "kode",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column}>
                 Kode
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -127,17 +119,9 @@ export const columns = (
         accessorKey: "kategori",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column}>
                 Kategori
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -151,17 +135,9 @@ export const columns = (
         accessorKey: "deskripsi",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column}>
                 Deskripsi
-                <ChevronsUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (

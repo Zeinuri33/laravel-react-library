@@ -3,7 +3,6 @@
 import { ColumnDef } from "@tanstack/react-table"
 
 import {
-    ChevronsUpDown,
     MoreHorizontal,
 } from "lucide-react"
 
@@ -12,6 +11,7 @@ import { router } from "@inertiajs/react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { DataTableSortHeader } from "@/components/data-table-sort-header"
 
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -97,17 +97,9 @@ export const columns = (): ColumnDef<Usulan>[] => [
         accessorKey: "nama",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column}>
                 Nama
-                <ChevronsUpDown />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -121,18 +113,9 @@ export const columns = (): ColumnDef<Usulan>[] => [
         accessorKey: "kontak",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden md:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden md:flex">
                 Kontak
-                <ChevronsUpDown />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -148,18 +131,9 @@ export const columns = (): ColumnDef<Usulan>[] => [
         accessorKey: "subjek",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden lg:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden lg:flex">
                 Subjek
-                <ChevronsUpDown />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => (
@@ -173,18 +147,9 @@ export const columns = (): ColumnDef<Usulan>[] => [
         accessorKey: "jawaban",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden md:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden md:flex">
                 Status
-                <ChevronsUpDown />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => {
@@ -212,18 +177,9 @@ export const columns = (): ColumnDef<Usulan>[] => [
         accessorKey: "created_at",
 
         header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className="hidden md:flex"
-                onClick={() =>
-                    column.toggleSorting(
-                        column.getIsSorted() === "asc"
-                    )
-                }
-            >
+            <DataTableSortHeader column={column} className="hidden md:flex">
                 Masuk
-                <ChevronsUpDown />
-            </Button>
+            </DataTableSortHeader>
         ),
 
         cell: ({ row }) => {

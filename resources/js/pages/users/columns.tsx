@@ -1,12 +1,9 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { 
-  ArrowUpDown,
-  ChevronsUpDown
-} from "lucide-react"
 import { MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DataTableSortHeader } from "@/components/data-table-sort-header"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -101,17 +98,11 @@ export const columns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
   },
   {
   id: "pengguna",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Pengguna
-          <ChevronsUpDown />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <DataTableSortHeader column={column}>
+        Pengguna
+      </DataTableSortHeader>
+    ),
     accessorFn: (row) => row.name,
     cell: ({ row }) => {
       const name = row.original.name
@@ -144,18 +135,11 @@ export const columns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
   },
   {
     accessorKey: "username",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="hidden md:flex"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Username
-          <ChevronsUpDown />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <DataTableSortHeader column={column} className="hidden md:flex">
+        Username
+      </DataTableSortHeader>
+    ),
     cell: ({ row }) => {
       const username = row.getValue("username") as string
 
@@ -174,18 +158,11 @@ export const columns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
     accessorFn: (row) =>
       row.role || row.roles?.[0]?.name || "", // 🔥 penting untuk sorting
 
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="hidden md:flex"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Role {/* 🔥 jangan Username lagi */}
-          <ChevronsUpDown />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <DataTableSortHeader column={column} className="hidden md:flex">
+        Role
+      </DataTableSortHeader>
+    ),
 
     cell: ({ row }) => {
       const role =
@@ -205,20 +182,11 @@ export const columns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
 
   {
     accessorKey: "created_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="hidden md:flex"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          Dibuat
-          <ChevronsUpDown />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <DataTableSortHeader column={column} className="hidden md:flex">
+        Dibuat
+      </DataTableSortHeader>
+    ),
     cell: ({ row }) => {
       const date = new Date(row.getValue("created_at") as string)
 
@@ -236,20 +204,11 @@ export const columns = (onEdit: (user: User) => void): ColumnDef<User>[] => [
 
   {
     accessorKey: "updated_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="hidden md:flex"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          Diperbarui
-          <ChevronsUpDown />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <DataTableSortHeader column={column} className="hidden md:flex">
+        Diperbarui
+      </DataTableSortHeader>
+    ),
     cell: ({ row }) => {
       const date = new Date(row.getValue("updated_at") as string)
 
