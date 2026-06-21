@@ -45,6 +45,8 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
     const pageInputRef = useRef<HTMLInputElement>(null);
     const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const viewerRef = useRef<HTMLDivElement>(null);
+    const pageDimensionsRef = useRef<{ width: number; height: number } | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     // Keep refs in sync
     useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
@@ -207,10 +209,52 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
         return () => window.removeEventListener('keydown', handler);
     }, []);
 
-    const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-        setNumPages(numPages);
+    const calculateFitScale = useCallback(() => {
+        const dims = pageDimensionsRef.current;
+        if (!dims || !containerRef.current) return;
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const availableWidth = containerRect.width - (isFullscreen ? 0 : 32);
+        const availableHeight = containerRect.height - (isFullscreen ? 0 : 48);
+
+        if (availableWidth <= 0 || availableHeight <= 0) return;
+
+        let widthScale: number;
+        if (viewMode === 'double') {
+            widthScale = availableWidth / (dims.width * 2 + 16);
+        } else {
+            widthScale = availableWidth / dims.width;
+        }
+        const heightScale = availableHeight / dims.height;
+
+        const optimalScale = Math.min(widthScale, heightScale, 2.5);
+        setScale(Math.max(0.5, Math.round(optimalScale * 10) / 10));
+    }, [viewMode, isFullscreen]);
+
+    const onDocumentLoadSuccess = async (pdf: { numPages: number; getPage: (n: number) => Promise<{ getViewport: (opts: { scale: number }) => { width: number; height: number } }> }) => {
+        setNumPages(pdf.numPages);
         setLoading(false);
+
+        try {
+            const firstPage = await pdf.getPage(1);
+            const viewport = firstPage.getViewport({ scale: 1 });
+            pageDimensionsRef.current = { width: viewport.width, height: viewport.height };
+
+            // Calculate initial fit scale after a short delay to allow layout to settle
+            requestAnimationFrame(() => {
+                calculateFitScale();
+            });
+        } catch (e) {
+            console.error('Error getting page dimensions:', e);
+        }
     };
+
+    // Recalculate scale when viewMode or fullscreen changes
+    useEffect(() => {
+        if (pageDimensionsRef.current) {
+            calculateFitScale();
+        }
+    }, [viewMode, isFullscreen, calculateFitScale]);
 
     const getSpreadPages = (pageNum: number, totalPages: number) => {
         if (pageNum === 1) return { left: null, right: 1 };
@@ -429,7 +473,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                 <div className={`${isFullscreen ? 'hidden' : 'h-12'}`} />
 
                 {/* MAIN CONTENT WRAPPER: fills remaining space to push footer down */}
-                <div className="flex flex-col flex-1">
+                <div ref={containerRef} className="flex flex-col flex-1">
 
                 {/* BOTTOM NAVBAR: Page Navigation */}
                 <div
@@ -754,7 +798,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
 
                 {/* FOOTER */}
                 <div className={`border-t border-gray-200 bg-white/50 py-4 text-center text-xs text-gray-400 transition-opacity duration-300 dark:border-gray-800 dark:bg-gray-900/50 ${
-                    isFullscreen ? 'opacity-0 pointer-events-none' : ''
+                    isFullscreen ? 'hidden' : ''
                 }`}>
                     <p>E-book hanya bisa dibaca secara online. Mohon tidak menyebarkan konten tanpa izin.</p>
                 </div>
