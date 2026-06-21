@@ -55,9 +55,11 @@ function PaginationLink({
       data-active={isActive}
       className={cn(
         buttonVariants({
-          variant: isActive ? "outline" : "ghost",
+          variant: isActive ? "default" : "ghost",
           size,
         }),
+        "rounded-lg transition-all duration-150",
+        isActive && "shadow-sm",
         className
       )}
       {...props}
@@ -73,11 +75,11 @@ function PaginationPrevious({
     <PaginationLink
       aria-label="Go to previous page"
       size="default"
-      className={cn("gap-1 px-2.5 sm:pl-2.5", className)}
+      className={cn("gap-1 px-2.5 sm:pl-2.5 rounded-lg", className)}
       {...props}
     >
-      <ChevronLeftIcon />
-      <span className="hidden sm:block">Previous</span>
+      <ChevronLeftIcon className="h-4 w-4" />
+      <span className="hidden sm:block">Prev</span>
     </PaginationLink>
   )
 }
@@ -90,11 +92,11 @@ function PaginationNext({
     <PaginationLink
       aria-label="Go to next page"
       size="default"
-      className={cn("gap-1 px-2.5 sm:pr-2.5", className)}
+      className={cn("gap-1 px-2.5 sm:pr-2.5 rounded-lg", className)}
       {...props}
     >
       <span className="hidden sm:block">Next</span>
-      <ChevronRightIcon />
+      <ChevronRightIcon className="h-4 w-4" />
     </PaginationLink>
   )
 }
@@ -107,7 +109,7 @@ function PaginationEllipsis({
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn("flex size-9 items-center justify-center", className)}
+      className={cn("flex size-8 items-center justify-center text-muted-foreground", className)}
       {...props}
     >
       <MoreHorizontalIcon className="size-4" />

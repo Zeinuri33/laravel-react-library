@@ -30,12 +30,12 @@ import type { NavItem } from '@/types'
 const footerNavItems: NavItem[] = [
     {
         title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
+        href: 'https://github.com/zeinuri33/digilib',
         icon: FolderGit2,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
+        title: 'Website',
+        href: '/',
         icon: BookOpen,
     },
 ]
@@ -134,10 +134,10 @@ export function AppSidebar() {
 
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+            <SidebarHeader className="border-b border-sidebar-border/20 bg-gradient-to-b from-sidebar-accent/30 to-transparent">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton size="lg" asChild className="group-data-[collapsible=icon]:p-1.5">
                             <Link href={dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
@@ -146,7 +146,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="py-2 gap-0">
                 {groups.map((group) => (
                     group.items.length > 0 && (
                         <NavMain
@@ -158,7 +158,7 @@ export function AppSidebar() {
                 ))}
             </SidebarContent>
 
-            <SidebarFooter>
+            <SidebarFooter className="border-t border-sidebar-border/20">
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
