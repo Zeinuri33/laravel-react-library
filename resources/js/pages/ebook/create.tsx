@@ -65,6 +65,13 @@ const tokenize = (value: string | null | undefined) =>
         .map((word) => word.trim())
         .filter((word) => word.length > 2 && !ignoredTitleWords.has(word))
 
+const styles = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+`
+
 export default function CreateEbook() {
     
 
@@ -74,6 +81,8 @@ export default function CreateEbook() {
     const [preview, setPreview] =
         useState<string | null>(null)
     const [extracting, setExtracting] =
+        useState(false)
+    const [isDragOver, setIsDragOver] =
         useState(false)
 
 
@@ -154,10 +163,7 @@ export default function CreateEbook() {
     const [pdfPreview, setPdfPreview] =
     useState<string | null>(null)
 
-    const handlePdfUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        const file = e.target.files?.[0]
+    const processPdfFile = async (file: File) => {
         if (!file) return
         manualKlasifikasiRef.current = false
         autoSelectedKlasifikasiRef.current = ""
@@ -213,6 +219,42 @@ export default function CreateEbook() {
                 "Gagal membaca metadata PDF"
             )
         }
+    }
+
+    const handlePdfUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        await processPdfFile(file)
+    }
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragOver(true)
+    }
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragOver(false)
+    }
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragOver(false)
+
+        const file = e.dataTransfer.files?.[0]
+        if (!file) return
+
+        if (file.type !== "application/pdf") {
+            toast.error("Hanya file PDF yang diperbolehkan")
+            return
+        }
+
+        await processPdfFile(file)
     }
     const [progress, setProgress] =
 
@@ -329,6 +371,7 @@ export default function CreateEbook() {
     return (
     <>
         <Head title="Tambah E-Book" />
+        <style>{styles}</style>
             <div className="p-6 space-y-4">
                 <div className="flex justify-between">
                     <Heading
@@ -389,26 +432,50 @@ export default function CreateEbook() {
                                 </Button>
                             </>
                         ) : (
-                            <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3">
-                                <Upload className="h-10 w-10 text-muted-foreground" />
+                            <div
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                onClick={() => document.getElementById("pdf-upload-input")?.click()}
+                                className={`flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3 transition-all duration-200 ${
+                                    isDragOver
+                                        ? "border-2 border-dashed border-primary bg-primary/5 scale-[1.02]"
+                                        : ""
+                                }`}
+                            >
+                                <div className="relative">
+                                    <Upload className={`h-14 w-14 transition-all duration-300 ${
+                                        isDragOver
+                                            ? "text-primary animate-bounce"
+                                            : "text-muted-foreground"
+                                    }`} style={{
+                                        animation: isDragOver ? undefined : 'float 3s ease-in-out infinite',
+                                        filter: isDragOver ? 'drop-shadow(0 0 8px hsl(var(--primary) / 0.5))' : undefined,
+                                    }} />
+                                </div>
 
-                                <div className="text-center">
-                                    <p className="font-medium">
-                                        Upload PDF
+                                <div className="text-center space-y-1">
+                                    <p className={`font-semibold transition-colors duration-200 ${
+                                        isDragOver ? "text-primary" : "text-foreground"
+                                    }`}>
+                                        {isDragOver ? "Lepaskan file di sini" : "Upload PDF"}
                                     </p>
 
                                     <p className="text-sm text-muted-foreground">
-                                        Klik untuk memilih file PDF
+                                        {isDragOver
+                                            ? "File akan diproses secara otomatis"
+                                            : "Klik atau drop file PDF di sini"}
                                     </p>
                                 </div>
 
                                 <Input
+                                    id="pdf-upload-input"
                                     type="file"
                                     accept=".pdf"
                                     className="hidden"
                                     onChange={handlePdfUpload}
                                 />
-                            </label>
+                            </div>
                         )}
 
                         {/* LOADING OVERLAY */}
