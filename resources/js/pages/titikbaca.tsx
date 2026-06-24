@@ -18,6 +18,7 @@ import {
     Library,
     Heart,
     ArrowUp,
+    Filter,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import AppearanceTabs from '@/components/appearance-tabs';
@@ -95,8 +96,9 @@ export default function TitikBacaPage({
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedKategori, setSelectedKategori] = useState<string | null>(null);
+    const [selectedKategori, setSelectedKategori] = useState<string[]>([]);
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [showFilterSidebar, setShowFilterSidebar] = useState(false);
     const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
 
     useEffect(() => {
@@ -221,7 +223,8 @@ export default function TitikBacaPage({
                 (b.isbn && b.isbn.includes(searchQuery));
 
             const matchKategori =
-                !selectedKategori || b.klasifikasi?.kategori === selectedKategori;
+                selectedKategori.length === 0 ||
+                (b.klasifikasi?.kategori ? selectedKategori.includes(b.klasifikasi.kategori) : false);
 
             return matchSearch && matchKategori;
         });
@@ -247,6 +250,15 @@ export default function TitikBacaPage({
                 <div
                     className={`pointer-events-none fixed -bottom-40 left-1/3 -z-10 h-[500px] w-[500px] rounded-full ${tc.orb} opacity-40`}
                 />
+                {/* Glow background — same style as /result page */}
+                <div
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-0 z-0 flex items-start justify-center overflow-hidden`}
+                >
+                    <div
+                        className={`-mt-40 h-[600px] w-[800px] rounded-full blur-[150px] ${tc.bgSoft} transition-colors duration-500`}
+                    />
+                </div>
 
                 {/* ============ HEADER ============ */}
                 <header
@@ -497,7 +509,7 @@ export default function TitikBacaPage({
                 </section>
 
                 {/* ============ POPULAR SECTION ============ */}
-                {popularEbooks.length > 0 && !searchQuery && !selectedKategori && (
+                {popularEbooks.length > 0 && !searchQuery && selectedKategori.length === 0 && (
                     <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-10">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -562,10 +574,10 @@ export default function TitikBacaPage({
                                                     </Link>
                                                 )}
                                             </div>
-                                            {/* Badge */}
+                                            {/* Category badge */}
                                             {ebook.klasifikasi?.kategori && (
                                                 <span
-                                                    className={`absolute top-2 left-2 rounded-md px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${tc.badge}`}
+                                                    className={`absolute top-2 left-2 max-w-[calc(100%-3rem)] truncate rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white shadow-sm ${tc.accentBg}`}
                                                 >
                                                     {ebook.klasifikasi.kategori}
                                                 </span>
@@ -616,237 +628,543 @@ export default function TitikBacaPage({
 
                 {/* ============ ALL EBOOKS SECTION ============ */}
                 <section id="all-ebooks" className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
-                    {/* Section Header + Filters */}
+                    {/* Section Header — full width, same style as Populer */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
-                        className="mb-8"
                     >
-                        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <div className={`rounded-lg p-2 ${tc.bgSoft}`}>
-                                        <Library className={`h-4 w-4 ${tc.text}`} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                            Koleksi E-Book
-                                        </h2>
-                                        <p className="text-sm text-gray-400 dark:text-gray-500">
-                                            Menampilkan {filteredEbooks.length} dari {ebooks.length} e-book
-                                        </p>
-                                    </div>
+                        <div className="mb-6 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`rounded-lg p-2 ${tc.bgSoft}`}>
+                                    <Library className={`h-4 w-4 ${tc.text}`} />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                                        Koleksi E-Book
+                                    </h2>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                                        Menampilkan {filteredEbooks.length} dari {ebooks.length} e-book
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Search (mobile only, since hero search is the main) */}
-                            <div className="relative w-full md:hidden">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Cari e-book..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full rounded-xl border border-gray-100 bg-white/60 py-2.5 pl-10 pr-9 text-sm text-gray-900 shadow-sm backdrop-blur-sm transition-all duration-200 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 dark:border-gray-800 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-gray-500"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => setSearchQuery('')}
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Category Pills */}
-                            <div className="flex flex-wrap items-center gap-2">
-                                <SlidersHorizontal className="h-4 w-4 text-gray-300" />
+                            {/* Mobile Filter Toggle & Stats */}
+                            <div className="flex items-center gap-3 lg:hidden">
                                 <button
-                                    onClick={() => setSelectedKategori(null)}
-                                    className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-300 ${
-                                        !selectedKategori
-                                            ? `${tc.bgGradient} ${tc.textWhite} shadow-md`
-                                            : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-slate-900 dark:text-gray-400 dark:hover:border-gray-600'
-                                    }`}
+                                    onClick={() => setShowFilterSidebar(true)}
+                                    className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${tc.bgSoft} ${tc.text} hover:scale-[1.02]`}
                                 >
-                                    Semua
+                                    <Filter className="h-3.5 w-3.5" />
+                                    Filter
+                                    {(searchQuery || selectedKategori.length > 0) && (
+                                        <span className={`ml-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ${tc.bgGradient}`}>
+                                            {(searchQuery ? 1 : 0) + selectedKategori.length}
+                                        </span>
+                                    )}
                                 </button>
-                                {kategoris.map((kat) => (
-                                    <button
-                                        key={kat}
-                                        onClick={() =>
-                                            setSelectedKategori(
-                                                kat === selectedKategori ? null : kat,
-                                            )
-                                        }
-                                        className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-300 ${
-                                            selectedKategori === kat
-                                                ? `${tc.bgGradient} ${tc.textWhite} shadow-md`
-                                                : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-slate-900 dark:text-gray-400 dark:hover:border-gray-600'
-                                        }`}
-                                    >
-                                        {kat}
-                                    </button>
-                                ))}
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Ebook Grid */}
-                    {filteredEbooks.length > 0 ? (
-                        <motion.div
-                            className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="show"
-                        >
-                            {filteredEbooks.map((ebook) => (
-                                <motion.div
-                                    key={ebook.id}
-                                    variants={cardVariants}
-                                    className={`group relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl dark:border-gray-800 dark:bg-slate-900 ${tc.cardBorder}`}
-                                >
-                                    {/* Cover */}
-                                    <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-                                        {ebook.cover ? (
-                                            <img
-                                                src={`/storage/${ebook.cover}`}
-                                                alt={ebook.judul}
-                                                className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
-                                                loading="lazy"
-                                            />
-                                        ) : (
-                                            <div className="flex h-full items-center justify-center">
-                                                <BookOpen className="h-14 w-14 text-gray-200 dark:text-gray-700" />
-                                            </div>
-                                        )}
-
-                                        {/* Hover overlay with CTA */}
-                                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100">
-                                            {ebook.file && (
-                                                <Link
-                                                    href={`/titikbaca/${ebook.id}/baca`}
-                                                    className={`translate-y-6 scale-90 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient} ${tc.shadow}`}
-                                                >
-                                                    Baca Sekarang
-                                                </Link>
-                                            )}
-                                        </div>
-
-                                        {/* Category badge */}
-                                        {ebook.klasifikasi?.kategori && (
-                                            <span
-                                                className={`absolute top-3 left-3 rounded-lg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider shadow-sm ${tc.badge}`}
-                                            >
-                                                {ebook.klasifikasi.kategori}
-                                            </span>
-                                        )}
-
-                                        {/* Bookmark button */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                toggleBookmark(ebook.id);
-                                            }}
-                                            aria-label="Tandai e-book"
-                                            className={`absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100 dark:bg-slate-900/70 dark:hover:bg-slate-900 ${
-                                                bookmarkedIds.has(ebook.id) ? 'opacity-100' : ''
-                                            }`}
-                                        >
-                                            <Heart
-                                                className={`h-4 w-4 transition-all duration-300 ${
-                                                    bookmarkedIds.has(ebook.id)
-                                                        ? 'scale-110 fill-red-500 text-red-500'
-                                                        : 'text-gray-600 dark:text-gray-300'
-                                                }`}
-                                            />
-                                        </button>
-
-                                        {/* Read count badge on cover */}
-                                        {ebook.baca_histories_count != null &&
-                                            ebook.baca_histories_count > 0 && (
-                                                <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/40 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm">
-                                                    <Eye className="h-3 w-3" />
-                                                    {ebook.baca_histories_count}x
-                                                </div>
-                                            )}
+                    {/* ===================== FILTER SIDEBAR (DESKTOP) & MAIN CONTENT ===================== */}
+                    <div className="flex gap-8">
+                        {/* ========== LEFT SIDEBAR FILTERS (Desktop) ========== */}
+                        <aside className="hidden w-64 shrink-0 lg:block">
+                            <div className="sticky top-28 space-y-6">
+                                {/* Sidebar Header */}
+                                {/* <div className="flex items-center gap-2">
+                                    <div className={`rounded-lg p-1.5 ${tc.bgSoft}`}>
+                                        <SlidersHorizontal className={`h-4 w-4 ${tc.text}`} />
                                     </div>
+                                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                                        Filter Ebook
+                                    </h3>
+                                </div> */}
 
-                                    {/* Info */}
-                                    <div className="p-4">
-                                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 transition-colors group-hover:text-gray-900 dark:text-white">
-                                            {ebook.judul}
-                                        </h3>
+                                {/* Sidebar Search */}
+                                <div>
+                                    <div className="group relative">
+                                        <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${tc.text}`} />
+                                        <input
+                                            type="text"
+                                            placeholder="Judul, penulis, ISBN..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className={`w-full rounded-xl border border-gray-100 bg-white/80 py-2.5 pl-10 pr-8 text-sm text-gray-900 shadow-sm backdrop-blur-sm transition-all duration-200 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 dark:border-gray-800 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-gray-500 ${tc.ring}`}
+                                        />
+                                        {searchQuery && (
+                                            <button
+                                                onClick={() => setSearchQuery('')}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
 
-                                        {ebook.penulis && (
-                                            <p className="mt-1 line-clamp-1 text-xs text-gray-400 dark:text-gray-500">
-                                                {ebook.penulis}
-                                            </p>
+                                {/* Kategori Filter */}
+                                <div>
+                                    <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                        Kategori
+                                    </label>
+                                    <div className="space-y-1">
+                                        {/* Pilih Semua */}
+                                        {kategoris.length > 0 && (
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedKategori((prev) =>
+                                                        prev.length === kategoris.length ? [] : [...kategoris],
+                                                    );
+                                                }}
+                                                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                                                    selectedKategori.length === kategoris.length
+                                                        ? `${tc.bgSoft} ${tc.text} shadow-sm`
+                                                        : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800/50'
+                                                }`}
+                                            >
+                                                <div
+                                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${tc.text} ${
+                                                        selectedKategori.length === kategoris.length
+                                                            ? `${tc.accentBg} border-transparent text-white`
+                                                            : selectedKategori.length > 0 && selectedKategori.length < kategoris.length
+                                                              ? `${tc.bgSoft} border-current`
+                                                              : 'border-gray-300 dark:border-gray-600 text-transparent'
+                                                    }`}
+                                                >
+                                                    {selectedKategori.length === kategoris.length ? (
+                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    ) : selectedKategori.length > 0 && selectedKategori.length < kategoris.length ? (
+                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                                                        </svg>
+                                                    ) : null}
+                                                </div>
+                                                <span className="font-semibold">Pilih Semua</span>
+                                                <span className="ml-auto text-xs text-gray-400">{ebooks.length}</span>
+                                            </button>
                                         )}
 
-                                        <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500">
-                                            {ebook.penerbit && (
-                                                <span className="line-clamp-1">{ebook.penerbit}</span>
+                                        {/* Divider */}
+                                        {kategoris.length > 0 && (
+                                            <div className="my-1 border-t border-gray-100 dark:border-gray-800" />
+                                        )}
+
+                                        {kategoris.map((kat) => {
+                                            const count = ebooks.filter((b) => b.klasifikasi?.kategori === kat).length;
+                                            const isChecked = selectedKategori.includes(kat);
+                                            return (
+                                                <button
+                                                    key={kat}
+                                                    onClick={() => {
+                                                        setSelectedKategori((prev) =>
+                                                            prev.includes(kat)
+                                                                ? prev.filter((k) => k !== kat)
+                                                                : [...prev, kat],
+                                                        );
+                                                    }}
+                                                    className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                                                        isChecked
+                                                            ? `${tc.bgSoft} ${tc.text} shadow-sm`
+                                                            : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800/50'
+                                                    }`}
+                                                >
+                                                    {/* Square checkbox */}
+                                                    <div
+                                                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
+                                                            isChecked
+                                                                ? `${tc.accentBg} border-transparent`
+                                                                : 'border-gray-300 dark:border-gray-600'
+                                                        }`}
+                                                    >
+                                                        {isChecked && (
+                                                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                    <span className="truncate">{kat}</span>
+                                                    <span className="ml-auto text-xs text-gray-400">{count}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Active Filters Summary */}
+                                {(searchQuery || selectedKategori.length > 0) && (
+                                    <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-800 dark:bg-gray-900/50">
+                                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                            Filter Aktif
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {searchQuery && (
+                                                <span className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[10px] font-medium text-gray-600 shadow-sm dark:bg-slate-800 dark:text-gray-300">
+                                                    Cari: "{searchQuery}"
+                                                    <button onClick={() => setSearchQuery('')}>
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </span>
                                             )}
-                                            {ebook.tahun_terbit && (
-                                                <span className="shrink-0">{ebook.tahun_terbit}</span>
-                                            )}
+                                            {selectedKategori.map((kat) => (
+                                                <span key={kat} className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[10px] font-medium text-gray-600 shadow-sm dark:bg-slate-800 dark:text-gray-300">
+                                                    {kat}
+                                                    <button onClick={() => setSelectedKategori((prev) => prev.filter((k) => k !== kat))}>
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Reset All */}
+                                {(searchQuery || selectedKategori.length > 0) && (
+                                    <button
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setSelectedKategori([]);
+                                        }}
+                                        className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${tc.bgSoft} ${tc.text} hover:scale-[1.02]`}
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                        Reset Semua Filter
+                                    </button>
+                                )}
+                            </div>
+                        </aside>
+
+                        {/* ========== MOBILE FILTER DRAWER (Overlay) ========== */}
+                        <AnimatePresence>
+                            {showFilterSidebar && (
+                                <>
+                                    {/* Backdrop */}
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        onClick={() => setShowFilterSidebar(false)}
+                                        className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm lg:hidden"
+                                    />
+                                    {/* Drawer */}
+                                    <motion.aside
+                                        initial={{ x: '-100%' }}
+                                        animate={{ x: 0 }}
+                                        exit={{ x: '-100%' }}
+                                        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                                        className="fixed inset-y-0 left-0 z-[80] w-72 overflow-y-auto border-r border-gray-100 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-slate-950 lg:hidden"
+                                    >
+                                        <div className="mb-6 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`rounded-lg p-1.5 ${tc.bgSoft}`}>
+                                                    <SlidersHorizontal className={`h-4 w-4 ${tc.text}`} />
+                                                </div>
+                                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                                                    Filter
+                                                </h3>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowFilterSidebar(false)}
+                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
                                         </div>
 
-                                        {/* Rating / stats row */}
-                                        <div className="mt-2.5 flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
-                                            {ebook.total_menit_baca != null &&
-                                                ebook.total_menit_baca > 0 && (
-                                                    <span className="flex items-center gap-1">
-                                                        <Clock className="h-3 w-3" />
-                                                        {ebook.total_menit_baca} menit
+                                        {/* Mobile Search */}
+                                        <div className="mb-6">
+                                            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                                Cari
+                                            </label>
+                                            <div className="group relative">
+                                                <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${tc.text}`} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Judul, penulis, ISBN..."
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    className={`w-full rounded-xl border border-gray-100 bg-white/80 py-2.5 pl-10 pr-8 text-sm text-gray-900 shadow-sm backdrop-blur-sm transition-all duration-200 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 dark:border-gray-800 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-gray-500 ${tc.ring}`}
+                                                />
+                                                {searchQuery && (
+                                                    <button
+                                                        onClick={() => setSearchQuery('')}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                                                    >
+                                                        <X className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Mobile Kategori */}
+                                        <div className="mb-6">
+                                            <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                                Kategori
+                                            </label>
+                                            <div className="space-y-1">
+                                                {/* Pilih Semua */}
+                                                {kategoris.length > 0 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedKategori((prev) =>
+                                                                prev.length === kategoris.length ? [] : [...kategoris],
+                                                            );
+                                                        }}
+                                                        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                                                            selectedKategori.length === kategoris.length
+                                                                ? `${tc.bgSoft} ${tc.text} shadow-sm`
+                                                                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800/50'
+                                                        }`}
+                                                    >
+                                                        <div
+                                                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${tc.text} ${
+                                                                selectedKategori.length === kategoris.length
+                                                                    ? `${tc.accentBg} border-transparent text-white`
+                                                                    : selectedKategori.length > 0 && selectedKategori.length < kategoris.length
+                                                                      ? `${tc.bgSoft} border-current`
+                                                                      : 'border-gray-300 dark:border-gray-600 text-transparent'
+                                                            }`}
+                                                        >
+                                                            {selectedKategori.length === kategoris.length ? (
+                                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            ) : selectedKategori.length > 0 && selectedKategori.length < kategoris.length ? (
+                                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                                                                </svg>
+                                                            ) : null}
+                                                        </div>
+                                                        <span className="font-semibold">Pilih Semua</span>
+                                                        <span className="ml-auto text-xs text-gray-400">{ebooks.length}</span>
+                                                    </button>
+                                                )}
+
+                                                {/* Divider */}
+                                                {kategoris.length > 0 && (
+                                                    <div className="my-1 border-t border-gray-100 dark:border-gray-800" />
+                                                )}
+
+                                                {kategoris.map((kat) => {
+                                                    const count = ebooks.filter((b) => b.klasifikasi?.kategori === kat).length;
+                                                    const isChecked = selectedKategori.includes(kat);
+                                                    return (
+                                                        <button
+                                                            key={kat}
+                                                            onClick={() => {
+                                                                setSelectedKategori((prev) =>
+                                                                    prev.includes(kat)
+                                                                        ? prev.filter((k) => k !== kat)
+                                                                        : [...prev, kat],
+                                                                );
+                                                            }}
+                                                            className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                                                                isChecked
+                                                                    ? `${tc.bgSoft} ${tc.text} shadow-sm`
+                                                                    : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800/50'
+                                                            }`}
+                                                        >
+                                                            {/* Square checkbox */}
+                                                            <div
+                                                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
+                                                                    isChecked
+                                                                        ? `${tc.accentBg} border-transparent`
+                                                                        : 'border-gray-300 dark:border-gray-600'
+                                                                }`}
+                                                            >
+                                                                {isChecked && (
+                                                                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                                    </svg>
+                                                                )}
+                                                            </div>
+                                                            <span className="truncate">{kat}</span>
+                                                            <span className="ml-auto text-xs text-gray-400">{count}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {(searchQuery || selectedKategori.length > 0) && (
+                                            <button
+                                                onClick={() => {
+                                                    setSearchQuery('');
+                                                    setSelectedKategori([]);
+                                                    setShowFilterSidebar(false);
+                                                }}
+                                                className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${tc.bgSoft} ${tc.text}`}
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                                Reset Semua Filter
+                                            </button>
+                                        )}
+                                    </motion.aside>
+                                </>
+                            )}
+                        </AnimatePresence>
+
+                        {/* ========== MAIN CONTENT ========== */}
+                        <div className="min-w-0 flex-1">
+                            {/* Ebook Grid */}
+                            {filteredEbooks.length > 0 ? (
+                                <motion.div
+                                    className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                                    variants={containerVariants}
+                                    initial="hidden"
+                                    animate="show"
+                                >
+                                    {filteredEbooks.map((ebook) => (
+                                        <motion.div
+                                            key={ebook.id}
+                                            variants={cardVariants}
+                                            className={`group relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl dark:border-gray-800 dark:bg-slate-900 ${tc.cardBorder}`}
+                                        >
+                                            {/* Cover */}
+                                            <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+                                                {ebook.cover ? (
+                                                    <img
+                                                        src={`/storage/${ebook.cover}`}
+                                                        alt={ebook.judul}
+                                                        className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
+                                                        loading="lazy"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full items-center justify-center">
+                                                        <BookOpen className="h-10 w-10 text-gray-200 dark:text-gray-700" />
+                                                    </div>
+                                                )}
+
+                                                {/* Hover overlay with CTA */}
+                                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100">
+                                                    {ebook.file && (
+                                                        <Link
+                                                            href={`/titikbaca/${ebook.id}/baca`}
+                                                            className={`translate-y-6 scale-90 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-lg opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient} ${tc.shadow}`}
+                                                        >
+                                                            Baca
+                                                        </Link>
+                                                    )}
+                                                </div>
+
+                                                {/* Category badge */}
+                                                {ebook.klasifikasi?.kategori && (
+                                                    <span
+                                                        className={`absolute top-2 left-2 max-w-[calc(100%-3rem)] truncate rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white shadow-sm ${tc.accentBg}`}
+                                                    >
+                                                        {ebook.klasifikasi.kategori}
                                                     </span>
                                                 )}
-                                        </div>
-                                    </div>
 
-                                    {/* Bottom accent line on hover */}
-                                    <div
-                                        className={`absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r transition-all duration-500 group-hover:w-full ${tc.bgGradient}`}
-                                    />
+                                                {/* Bookmark button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        toggleBookmark(ebook.id);
+                                                    }}
+                                                    aria-label="Tandai e-book"
+                                                    className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/70 opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100 dark:bg-slate-900/70 dark:hover:bg-slate-900 ${
+                                                        bookmarkedIds.has(ebook.id) ? 'opacity-100' : ''
+                                                    }`}
+                                                >
+                                                    <Heart
+                                                        className={`h-3.5 w-3.5 transition-all duration-300 ${
+                                                            bookmarkedIds.has(ebook.id)
+                                                                ? 'scale-110 fill-red-500 text-red-500'
+                                                                : 'text-gray-600 dark:text-gray-300'
+                                                        }`}
+                                                    />
+                                                </button>
+
+                                                {/* Read count badge on cover */}
+                                                {ebook.baca_histories_count != null &&
+                                                    ebook.baca_histories_count > 0 && (
+                                                        <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-black/40 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm">
+                                                            <Eye className="h-3 w-3" />
+                                                            {ebook.baca_histories_count}x
+                                                        </div>
+                                                    )}
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="p-3">
+                                                <h3 className="line-clamp-2 text-xs font-bold leading-snug text-gray-900 transition-colors group-hover:text-gray-900 dark:text-white">
+                                                    {ebook.judul}
+                                                </h3>
+
+                                                {ebook.penulis && (
+                                                    <p className="mt-1 line-clamp-1 text-[10px] text-gray-400 dark:text-gray-500">
+                                                        {ebook.penulis}
+                                                    </p>
+                                                )}
+
+                                                <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500">
+                                                    {ebook.penerbit && (
+                                                        <span className="line-clamp-1">{ebook.penerbit}</span>
+                                                    )}
+                                                    {ebook.tahun_terbit && (
+                                                        <span className="shrink-0">{ebook.tahun_terbit}</span>
+                                                    )}
+                                                </div>
+
+                                                {/* Rating / stats row */}
+                                                <div className="mt-1.5 flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
+                                                    {ebook.total_menit_baca != null &&
+                                                        ebook.total_menit_baca > 0 && (
+                                                            <span className="flex items-center gap-1">
+                                                                <Clock className="h-3 w-3" />
+                                                                {ebook.total_menit_baca} menit
+                                                            </span>
+                                                        )}
+                                                </div>
+                                            </div>
+
+                                            {/* Bottom accent line on hover */}
+                                            <div
+                                                className={`absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r transition-all duration-500 group-hover:w-full ${tc.bgGradient}`}
+                                            />
+                                        </motion.div>
+                                    ))}
                                 </motion.div>
-                            ))}
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.4 }}
-                            className="flex flex-col items-center justify-center rounded-2xl border border-gray-100 py-24 dark:border-gray-800"
-                        >
-                            <div
-                                className={`rounded-full p-5 ${tc.bgSoft}`}
-                            >
-                                <Search className={`h-8 w-8 ${tc.text}`} />
-                            </div>
-                            <h3 className="mt-5 text-xl font-bold text-gray-900 dark:text-white">
-                                {searchQuery
-                                    ? 'E-book tidak ditemukan'
-                                    : 'Belum ada e-book'}
-                            </h3>
-                            <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">
-                                {searchQuery
-                                    ? 'Coba gunakan kata kunci yang berbeda'
-                                    : 'Belum ada koleksi e-book yang tersedia'}
-                            </p>
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery('')}
-                                    className={`mt-5 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-300 hover:scale-105 ${tc.bgSoft} ${tc.text}`}
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="flex flex-col items-center justify-center rounded-2xl border border-gray-100 py-24 dark:border-gray-800"
                                 >
-                                    Reset pencarian
-                                </button>
+                                    <div
+                                        className={`rounded-full p-5 ${tc.bgSoft}`}
+                                    >
+                                        <Search className={`h-8 w-8 ${tc.text}`} />
+                                    </div>
+                                    <h3 className="mt-5 text-xl font-bold text-gray-900 dark:text-white">
+                                        {searchQuery
+                                            ? 'E-book tidak ditemukan'
+                                            : 'Belum ada e-book'}
+                                    </h3>
+                                    <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">
+                                        {searchQuery
+                                            ? 'Coba gunakan kata kunci yang berbeda'
+                                            : 'Belum ada koleksi e-book yang tersedia'}
+                                    </p>
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className={`mt-5 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-300 hover:scale-105 ${tc.bgSoft} ${tc.text}`}
+                                        >
+                                            Reset pencarian
+                                        </button>
+                                    )}
+                                </motion.div>
                             )}
-                        </motion.div>
-                    )}
+                        </div>
+                    </div>
                 </section>
 
                 {/* ============ FOOTER ============ */}

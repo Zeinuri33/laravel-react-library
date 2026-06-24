@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Head, router, useForm, Link } from "@inertiajs/react"
-import { Check, ChevronsUpDown, Upload, X } from "lucide-react"
+import { Check, ChevronsUpDown, SearchX, Upload, X } from "lucide-react"
 import Heading from "@/components/heading"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,6 +61,8 @@ export default function EditEbook({
 
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
+    const [step, setStep] = useState<'kategori' | 'klasifikasi'>('kategori')
+    const [selectedStepKategori, setSelectedStepKategori] = useState<string | null>(null)
 
     const [preview, setPreview] =
         useState<string | null>(ebook.cover)
@@ -112,30 +114,59 @@ export default function EditEbook({
         ebook.file
     )
 
+    // Unique categories (each kategori appears once), sorted by smallest kode ASC
+    const uniqueKategoris = useMemo(() => {
+        const map = new Map<string, { kategori: string; count: number; minKode: string }>()
+        for (const item of klasifikasis) {
+            const key = item.kategori ?? "Tanpa Kategori"
+            if (!map.has(key)) {
+                map.set(key, { kategori: key, count: 0, minKode: item.kode })
+            } else {
+                const entry = map.get(key)!
+                if (item.kode.localeCompare(entry.minKode, undefined, { numeric: true }) < 0) {
+                    entry.minKode = item.kode
+                }
+            }
+            map.get(key)!.count++
+        }
+        return Array.from(map.values()).sort((a, b) => a.minKode.localeCompare(b.minKode, undefined, { numeric: true }))
+    }, [klasifikasis])
+
     const selectedKlasifikasi = klasifikasis.find(
         (item) => String(item.id) === data.klasifikasi_id
     )
 
-    const filteredKlasifikasis = klasifikasis.filter((item) => {
+    // Classifications filtered by selected category (step 2), sorted by kode ASC
+    const filteredByKategori = useMemo(() => {
+        if (!selectedStepKategori) return []
+        return klasifikasis
+            .filter((item) => (item.kategori ?? "Tanpa Kategori") === selectedStepKategori)
+            .sort((a, b) => a.kode.localeCompare(b.kode, undefined, { numeric: true }))
+    }, [klasifikasis, selectedStepKategori])
+
+    // Filter within the selected category
+    const filteredKlasifikasis = useMemo(() => {
         const keyword = (search || "")
             .toLowerCase()
             .trim()
 
-        const text = `${item.kode ?? ""} ${item.kategori ?? ""} ${item.deskripsi ?? ""}`
-            .toLowerCase()
+        if (!keyword) return filteredByKategori
 
-        if (!keyword) return true
+        return filteredByKategori.filter((item) => {
+            const text = `${item.kode ?? ""} ${item.kategori ?? ""} ${item.deskripsi ?? ""}`
+                .toLowerCase()
 
-        if (text.includes(keyword)) return true
+            if (text.includes(keyword)) return true
 
-        const tokens = keyword
-            .split(" ")
-            .filter(Boolean)
+            const tokens = keyword
+                .split(" ")
+                .filter(Boolean)
 
-        if (tokens.length === 0) return true
+            if (tokens.length === 0) return true
 
-        return tokens.some((token) => text.includes(token))
-    })
+            return tokens.some((token) => text.includes(token))
+        })
+    }, [filteredByKategori, search])
 
     return (
     <>
@@ -300,81 +331,182 @@ export default function EditEbook({
                                             : "Pilih Klasifikasi"}
                                     </span>
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-
-                                <Dialog
+                                </Button>                                <Dialog
                                     open={open}
                                     onOpenChange={(nextOpen) => {
                                         setOpen(nextOpen)
 
                                         if (!nextOpen) {
                                             setSearch("")
+                                            setStep('kategori')
+                                            setSelectedStepKategori(null)
                                         }
                                     }}
                                 >
                                     <DialogContent className="max-w-2xl overflow-hidden bg-background p-0">
                                         <DialogHeader className="border-b bg-background px-6 py-4">
-                                            <DialogTitle>
-                                                Pilih Klasifikasi
-                                            </DialogTitle>
-                                            <DialogDescription>
-                                                Cari berdasarkan kode, kategori, atau deskripsi klasifikasi.
-                                            </DialogDescription>
+                                            <div className="flex items-center gap-3">
+                                                {step === 'klasifikasi' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setStep('kategori')
+                                                            setSelectedStepKategori(null)
+                                                            setSearch("")
+                                                        }}
+                                                        className="-ml-1 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                    >
+                                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                                <div>
+                                                    <DialogTitle>
+                                                        {step === 'kategori' ? 'Pilih Kategori' : `Pilih Klasifikasi — ${selectedStepKategori}`}
+                                                    </DialogTitle>
+                                                    <DialogDescription>
+                                                        {step === 'kategori'
+                                                            ? 'Pilih kategori terlebih dahulu, lalu pilih klasifikasi yang sesuai.'
+                                                            : 'Pilih klasifikasi berdasarkan deskripsi yang tersedia.'}
+                                                    </DialogDescription>
+                                                </div>
+                                            </div>
                                         </DialogHeader>
 
                                         <Command
                                             shouldFilter={false}
                                             className="rounded-none bg-background text-foreground [&_[data-slot=command-input-wrapper]]:h-11 [&_[data-slot=command-input-wrapper]]:bg-background [&_[data-slot=command-input]]:h-11 [&_[data-slot=command-input]]:py-0"
                                         >
-                                            <CommandInput
-                                                placeholder="Cari klasifikasi..."
-                                                value={search}
-                                                onValueChange={(value) => setSearch(value ?? "")}
-                                            />
+                                            {step === 'kategori' && (
+                                                <CommandInput
+                                                    placeholder="Cari kategori..."
+                                                    value={search}
+                                                    onValueChange={(value) => setSearch(value ?? "")}
+                                                />
+                                            )}
+                                            {step === 'klasifikasi' && (
+                                                <CommandInput
+                                                    placeholder="Cari kode atau deskripsi klasifikasi..."
+                                                    value={search}
+                                                    onValueChange={(value) => setSearch(value ?? "")}
+                                                />
+                                            )}
 
                                             <CommandList className="max-h-[420px] bg-background">
-                                                {filteredKlasifikasis.length === 0 ? (
-                                                    <CommandEmpty className="bg-background">
-                                                        Tidak ditemukan
-                                                    </CommandEmpty>
-                                                ) : (
-                                                    <CommandGroup className="bg-background">
-                                                        {filteredKlasifikasis.map((item) => (
-                                                            <CommandItem
-                                                                key={item.id}
-                                                                value={String(item.id)}
-                                                                className="items-start bg-background py-3 data-[selected=true]:bg-muted/70"
-                                                                onSelect={() => {
-                                                                    setData(
-                                                                        "klasifikasi_id",
-                                                                        String(item.id)
-                                                                    )
-                                                                    setOpen(false)
-                                                                    setSearch("")
-                                                                }}
-                                                            >
-                                                                <Check
-                                                                    className={cn(
-                                                                        "mt-0.5 mr-2 h-4 w-4",
-                                                                        data.klasifikasi_id ===
-                                                                            String(item.id)
-                                                                            ? "opacity-100"
-                                                                            : "opacity-0"
-                                                                    )}
-                                                                />
-                                                                <div className="min-w-0 flex-1">
-                                                                    <div className="font-medium">
-                                                                        {item.kode} - {item.kategori}
+                                                {/* STEP 1: PILIH KATEGORI */}
+                                                {step === 'kategori' && (
+                                                    <>
+                                                        {uniqueKategoris.length === 0 ? (
+                                                            <CommandEmpty className="bg-background px-6 py-10">
+                                                                <div className="flex flex-col items-center gap-3 text-center">
+                                                                    <div className="flex h-12 w-12 items-center justify-center rounded-full border bg-muted/40">
+                                                                        <SearchX className="h-5 w-5 text-muted-foreground" />
                                                                     </div>
-                                                                    {item.deskripsi && (
-                                                                        <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                                                                            {item.deskripsi}
-                                                                        </div>
-                                                                    )}
+                                                                    <div className="space-y-1">
+                                                                        <p className="font-medium text-foreground">
+                                                                            Tidak ditemukan
+                                                                        </p>
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            Tidak ada kategori yang tersedia.
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
+                                                            </CommandEmpty>
+                                                        ) : (
+                                                            <CommandGroup className="bg-background">
+                                                                {uniqueKategoris
+                                                                    .filter((kat) => {
+                                                                        const keyword = search.toLowerCase().trim()
+                                                                        if (!keyword) return true
+                                                                        return kat.kategori.toLowerCase().includes(keyword)
+                                                                    })
+                                                                    .map((kat) => (
+                                                                        <CommandItem
+                                                                            key={kat.kategori}
+                                                                            value={kat.kategori}
+                                                                            className="bg-background py-3 data-[selected=true]:bg-muted/70"
+                                                                            onSelect={() => {
+                                                                                setSelectedStepKategori(kat.kategori)
+                                                                                setStep('klasifikasi')
+                                                                                setSearch("")
+                                                                            }}
+                                                                        >
+                                                                            <div className="flex min-w-0 flex-1 items-center justify-between">
+                                                                                <span className="font-medium">{kat.kategori}</span>
+                                                                                <span className="ml-3 shrink-0 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                                                                    {kat.count} item
+                                                                                </span>
+                                                                            </div>
+                                                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 rotate-90 text-muted-foreground" />
+                                                                        </CommandItem>
+                                                                    ))}
+                                                            </CommandGroup>
+                                                        )}
+                                                    </>
+                                                )}
+
+                                                {/* STEP 2: PILIH KLASIFIKASI */}
+                                                {step === 'klasifikasi' && (
+                                                    <>
+                                                        {filteredKlasifikasis.length === 0 ? (
+                                                            <CommandEmpty className="bg-background px-6 py-10">
+                                                                <div className="flex flex-col items-center gap-3 text-center">
+                                                                    <div className="flex h-12 w-12 items-center justify-center rounded-full border bg-muted/40">
+                                                                        <SearchX className="h-5 w-5 text-muted-foreground" />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <p className="font-medium text-foreground">
+                                                                            Tidak ditemukan
+                                                                        </p>
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            Coba gunakan kata kunci lain.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </CommandEmpty>
+                                                        ) : (
+                                                            <CommandGroup className="bg-background">
+                                                                {filteredKlasifikasis.map((item) => (
+                                                                    <CommandItem
+                                                                        key={item.id}
+                                                                        value={String(item.id)}
+                                                                        className="items-start bg-background py-3 data-[selected=true]:bg-muted/70"
+                                                                        onSelect={() => {
+                                                                            setData(
+                                                                                "klasifikasi_id",
+                                                                                String(item.id)
+                                                                            )
+                                                                            setOpen(false)
+                                                                            setSearch("")
+                                                                            setStep('kategori')
+                                                                            setSelectedStepKategori(null)
+                                                                        }}
+                                                                    >
+                                                                        <Check
+                                                                            className={cn(
+                                                                                "mt-0.5 mr-2 h-4 w-4",
+                                                                                data.klasifikasi_id ===
+                                                                                    String(item.id)
+                                                                                ? "opacity-100"
+                                                                                : "opacity-0"
+                                                                            )}
+                                                                        />
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <div className="font-medium">
+                                                                                {item.kode} — {item.kategori}
+                                                                            </div>
+                                                                            {item.deskripsi && (
+                                                                                <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                                                                    {item.deskripsi}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </CommandGroup>
+                                                        )}
+                                                    </>
                                                 )}
                                             </CommandList>
                                         </Command>

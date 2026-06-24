@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 
 /* ================= OPAC CONFIG ================= */
-const OPAC_API = 'https://opac.lib.ibrahimy.ac.id/api/BukuApiController.php';
+const OPAC_API = 'https://opac.ibrahimy.ac.id/api/BukuApiController.php';
 const OPAC_TOKEN = 'lib180597';
 
 /* ================= HELPERS ================= */
@@ -21,11 +21,33 @@ const highlight = (
 ) => {
     if (!keyword) return text;
 
-    const words = keyword.split(' ').filter(Boolean);
+    // 1. Daftar kata yang diabaikan (Indonesian Stop Words)
+    const stopWords = [
+        'dan', 'di', 'ke', 'dari', 'yang', 'pada', 'untuk',
+        'dengan', 'dalam', 'ini', 'itu', 'adalah', 'atau'
+    ];
+
+    // 2. Pecah keyword dan saring kata yang tidak penting
+    const words = keyword.split(' ').filter((w) => {
+        // Bersihkan karakter aneh
+        const cleanWord = w.toLowerCase().replace(/[^a-z0-9]/g, '');
+        // Abaikan jika panjang kata kurang dari 3 huruf atau termasuk stop words
+        return cleanWord.length > 2 && !stopWords.includes(cleanWord);
+    });
+
+    // Jika setelah disaring tidak ada kata yang tersisa, kembalikan teks asli
+    if (words.length === 0) return text;
+
     let result = text;
 
     words.forEach((w) => {
-        const regex = new RegExp(`(${w})`, 'gi');
+        // Escape karakter khusus regex agar tidak error
+        const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // 3. Gunakan \b (Word Boundary) agar hanya mewarnai kata utuh
+        // Contoh: "dan" tidak akan mewarnai "badan" atau "dandan"
+        const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+
         result = result.replace(
             regex,
             `<span class="${themeTextClass} font-semibold">$1</span>`,
@@ -128,8 +150,8 @@ export default function Result() {
         },
     };
     const currentTheme =
-    themeStyles[themeColor as keyof typeof themeStyles] ||
-    themeStyles.emerald;
+        themeStyles[themeColor as keyof typeof themeStyles] ||
+        themeStyles.emerald;
 
     useEffect(() => {
         const handleScroll = () => {
@@ -148,6 +170,7 @@ export default function Result() {
     const [loading, setLoading] = useState(false);
 
     const [books, setBooks] = useState<any[]>([]);
+    const [totalBooks, setTotalBooks] = useState(0);
     const [wiki, setWiki] = useState<any[]>([]);
     const [journals, setJournals] = useState<any[]>([]);
     const [articles, setArticles] = useState<any[]>([]);
@@ -172,10 +195,10 @@ export default function Result() {
 
     const perPage = 10;
 
-    const paginatedBooks = books.slice(
-        (pageBook - 1) * perPage,
-        pageBook * perPage,
-    );
+    // const paginatedBooks = books.slice(
+    //     (pageBook - 1) * perPage,
+    //     pageBook * perPage,
+    // );
 
     const paginatedWiki = wiki.slice(
         (pageWiki - 1) * perPage,
@@ -225,6 +248,38 @@ export default function Result() {
         pageDspace * perPage,
     );
 
+    /* ================= PENGAMBILAN DATA BUKU DENGAN PAGINATION ================= */
+    useEffect(() => {
+        if (!query) return;
+
+        const fetchBooks = async () => {
+            setLoadingBooks(true);
+            try {
+                // Tambahkan parameter &page=${pageBook}&limit=${perPage}
+                const res = await fetch(
+                    `${OPAC_API}?token=${OPAC_TOKEN}&q=${query}&page=${pageBook}&limit=${perPage}`,
+                );
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    setBooks(data.data || []);
+                    setTotalBooks(data.total_data || 0); // Ambil total data dari API
+                } else {
+                    setBooks([]);
+                    setTotalBooks(0);
+                }
+            } catch (e) {
+                console.error('BOOK ERROR:', e);
+                setBooks([]);
+                setTotalBooks(0);
+            } finally {
+                setLoadingBooks(false);
+            }
+        };
+
+        fetchBooks();
+    }, [query, pageBook]);
+
     /* ================= FETCH ================= */
     useEffect(() => {
         if (!query) return;
@@ -239,21 +294,21 @@ export default function Result() {
             const start = performance.now();
 
             /* ================= BOOK ================= */
-            const fetchBooks = async () => {
-                setLoadingBooks(true);
-                try {
-                    const res = await fetch(
-                        `${OPAC_API}?token=${OPAC_TOKEN}&q=${query}`,
-                    );
-                    const data = await res.json();
-                    setBooks(data?.data || []);
-                } catch (e) {
-                    console.error('BOOK ERROR:', e);
-                    setBooks([]);
-                } finally {
-                    setLoadingBooks(false);
-                }
-            };
+            // const fetchBooks = async () => {
+            //     setLoadingBooks(true);
+            //     try {
+            //         const res = await fetch(
+            //             `${OPAC_API}?token=${OPAC_TOKEN}&q=${query}`,
+            //         );
+            //         const data = await res.json();
+            //         setBooks(data?.data || []);
+            //     } catch (e) {
+            //         console.error('BOOK ERROR:', e);
+            //         setBooks([]);
+            //     } finally {
+            //         setLoadingBooks(false);
+            //     }
+            // };
 
             /* ================= WIKI ================= */
             const fetchWiki = async () => {
@@ -370,129 +425,34 @@ export default function Result() {
             };
 
             /* ================= DSPACE ================= */
-            const API_URL = '/proxy-dspace.php';
-
             const fetchDspace = async () => {
                 setLoadingDspace(true);
-
                 try {
-                    /* ================= FETCH VIA PROXY ================= */
-                    const res = await fetch(API_URL, {
-                        headers: {
-                            Accept: 'application/xml, application/json',
-                        },
-                    });
+                    // Panggil API Laravel di server Anda
+                    const res = await fetch(`/api/repository-search?q=${encodeURIComponent(query)}`);
 
-                    if (!res.ok) {
-                        throw new Error(`HTTP ${res.status}`);
+                    if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+
+                    const data = await res.json();
+
+                    if (data.status === 'success' && data.results) {
+                        const formattedDspace = data.results.map((item: any) => ({
+                            name: item.name || 'Tanpa Judul',
+                            handle: item.handle,
+                            abstract: item.abstract || '',
+                            // Pisahkan author menggunakan koma jika ada pemisah ||
+                            author: item.author ? item.author.replace(/ \|\| /g, ', ') : 'Unknown Author',
+                            year: item.year || '-',
+                            collection_name: item.collection_name,
+                            url: item.handle ? `https://repository.ibrahimy.ac.id/handle/${item.handle}` : '#',
+                        }));
+
+                        setDspace(formattedDspace);
+                    } else {
+                        setDspace([]);
                     }
-
-                    const textData = await res.text();
-
-                    /* ================= XML PARSER ================= */
-                    const parser = new DOMParser();
-
-                    const xmlDoc = parser.parseFromString(textData, 'text/xml');
-
-                    /* ================= ERROR XML ================= */
-                    const parserError = xmlDoc.querySelector('parsererror');
-
-                    if (parserError) {
-                        throw new Error('XML Parsing Error');
-                    }
-
-                    const itemNodes = xmlDoc.querySelectorAll('item');
-
-                    /* ================= PARSE ITEMS ================= */
-                    const parsedItems = Array.from(itemNodes).map(
-                        (node: any) => {
-                            const name =
-                                node.querySelector('name')?.textContent ||
-                                'Tanpa Judul';
-
-                            const handle =
-                                node.querySelector('handle')?.textContent || '';
-
-                            const metadata: any = {};
-
-                            const metadataNodes =
-                                node.querySelectorAll('metadata');
-
-                            metadataNodes.forEach((md: any) => {
-                                const key =
-                                    md.querySelector('key')?.textContent || '';
-
-                                const value =
-                                    md.querySelector('value')?.textContent ||
-                                    '';
-
-                                if (key && value) {
-                                    if (!metadata[key]) {
-                                        metadata[key] = [];
-                                    }
-
-                                    metadata[key].push(value);
-                                }
-                            });
-
-                            return {
-                                name,
-                                handle,
-                                metadata,
-
-                                author:
-                                    metadata['dc.contributor.author']?.join(
-                                        ', ',
-                                    ) || 'Unknown Author',
-
-                                advisor:
-                                    metadata['dc.contributor.advisor']?.join(
-                                        ', ',
-                                    ) || '-',
-
-                                year: metadata['dc.date.issued']?.[0] || '-',
-
-                                abstract:
-                                    metadata['dc.description.abstract']?.[0] ||
-                                    '',
-
-                                url: handle
-                                    ? `https://repository.ibrahimy.ac.id/handle/${handle}`
-                                    : '#',
-                            };
-                        },
-                    );
-
-                    /* ================= FILTER ================= */
-                    const searchLower = query.toLowerCase();
-
-                    const filtered = parsedItems.filter((item: any) => {
-                        const matchName = item.name
-                            ?.toLowerCase()
-                            .includes(searchLower);
-
-                        let matchMetadata = false;
-
-                        for (const key in item.metadata) {
-                            const values = item.metadata[key];
-
-                            if (
-                                values.some((val: string) =>
-                                    val.toLowerCase().includes(searchLower),
-                                )
-                            ) {
-                                matchMetadata = true;
-                                break;
-                            }
-                        }
-
-                        return matchName || matchMetadata;
-                    });
-
-                    setDspace(filtered);
                 } catch (e) {
                     console.error('DSPACE ERROR:', e);
-
                     setDspace([]);
                 } finally {
                     setLoadingDspace(false);
@@ -501,7 +461,7 @@ export default function Result() {
 
             /* JALANKAN SEMUA BARENG */
             await Promise.all([
-                fetchBooks(),
+                // fetchBooks(),
                 fetchWiki(),
                 fetchJournals(),
                 fetchArticles(),
@@ -956,9 +916,9 @@ export default function Result() {
                                     <div className="flex gap-4 overflow-x-auto pb-2">
                                         {books.slice(0, 6).map((b, i) => {
                                             const cover =
-                                                b.image && b.image !== '-'
-                                                    ? b.image
-                                                    : 'https://opac.lib.ibrahimy.ac.id/images/default/image.png';
+                                                b.image_url && b.image_url !== '-'
+                                                    ? b.image_url
+                                                    : 'https://opac.ibrahimy.ac.id/images/default/image.png';
 
                                             return (
                                                 <a
@@ -995,141 +955,95 @@ export default function Result() {
                                     /* ================= LIST DETAIL (BOOK TAB) ================= */
                                     <>
                                         <ul className="space-y-4">
-                                            {paginatedBooks.map((b, i) => {
-                                                const cover =
-                                                    b.image && b.image !== '-'
-                                                        ? b.image
-                                                        : 'https://opac.lib.ibrahimy.ac.id/images/default/image.png';
+                                            {books.map((b, i) => {
+                                                const cover = b.image_url ? b.image_url : 'https://opac.ibrahimy.ac.id/images/default/image.png';
 
                                                 return (
-                                                    <a
+                                                    <li
                                                         key={i}
-                                                        href={b.opac_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="block"
+                                                        className={`group mb-4 flex flex-col sm:flex-row gap-6 rounded-2xl border border-slate-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 will-change-transform hover:-translate-y-1 hover:shadow-xl dark:border-white/5 dark:bg-slate-900/60 ${currentTheme.cardHover}`}
                                                     >
-                                                        <li
-                                                            className={`group mb-4 flex gap-4 rounded-2xl border border-slate-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 will-change-transform hover:-translate-y-1 hover:shadow-xl dark:border-white/5 dark:bg-slate-900/60 ${currentTheme.cardHover}`}
-                                                        >
-                                                            {/* COVER */}
+                                                        {/* KIRI: COVER */}
+                                                        <div className="shrink-0">
                                                             <img
                                                                 src={cover}
                                                                 alt={b.title}
-                                                                className="h-45 w-33 rounded object-cover shadow-sm"
+                                                                className="h-48 w-32 rounded object-cover shadow-sm border border-slate-200 dark:border-slate-700"
                                                             />
+                                                        </div>
 
-                                                            <div className="flex-1">
-                                                                <div className="flex flex-col">
-                                                                    {/* LABEL */}
-                                                                    <span
-                                                                        className={`inline-block self-start rounded-md px-2 py-1 text-xs font-semibold tracking-wider uppercase ${currentTheme.badge}`}
-                                                                    >
-                                                                        OPAC IBRAHIMY
-                                                                    </span>
+                                                        {/* TENGAH: DETAIL BUKU */}
+                                                        <div className="flex-1 flex flex-col justify-start">
+                                                            {/* Judul & Label */}
+                                                            <div className="mb-2">
+                                                                <span className={`inline-block mb-2 rounded-md px-2 py-1 text-[10px] font-bold tracking-wider uppercase ${currentTheme.badge}`}>
+                                                                    OPAC IBRAHIMY
+                                                                </span>
 
-                                                                    {/* TITLE */}
-                                                                    <div className="text-lg font-semibold text-slate-900 transition group-hover:underline dark:text-slate-100">
-                                                                        <span
-                                                                            dangerouslySetInnerHTML={{
-                                                                                __html: highlight(
-                                                                                    b.title || 'Tanpa Judul',
-                                                                                    query,
-                                                                                    currentTheme.text,
-                                                                                ),
-                                                                            }}
-                                                                        />
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* AUTHORS */}
-                                                                {b.authors && b.authors !== '-' && (
-                                                                    <div className="mt-2 flex flex-wrap gap-2">
-                                                                        {b.authors
-                                                                            .split('||')
-                                                                            .slice(0, 5)
-                                                                            .map(
-                                                                                (
-                                                                                    author: string,
-                                                                                    idx: number,
-                                                                                ) => (
-                                                                                    <button
-                                                                                        key={idx}
-                                                                                        onClick={(e) => {
-                                                                                            e.preventDefault();
-                                                                                            e.stopPropagation();
-
-                                                                                            setInput(
-                                                                                                author.trim(),
-                                                                                            );
-
-                                                                                            router.get(
-                                                                                                '/result',
-                                                                                                {
-                                                                                                    q: author.trim(),
-                                                                                                    tab: 'book',
-                                                                                                },
-                                                                                            );
-                                                                                        }}
-                                                                                        className="rounded-full bg-slate-100 px-2 py-1 text-xs transition hover:bg-slate-200 dark:bg-slate-900/60 dark:hover:bg-gray-600"
-                                                                                    >
-                                                                                        {author.trim()}
-                                                                                    </button>
-                                                                                ),
-                                                                            )}
-                                                                    </div>
-                                                                )}
-
-                                                                {/* DETAIL */}
-                                                                <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                                                                    {b.publisher && (
-                                                                        <div>
-                                                                            <span className="font-medium text-slate-500">
-                                                                                Penerbit:
-                                                                            </span>{' '}
-                                                                            {b.publisher} ({b.year})
-                                                                        </div>
-                                                                    )}
-
-                                                                    {b.edition && (
-                                                                        <div>
-                                                                            <span className="font-medium text-slate-500">
-                                                                                Edisi:
-                                                                            </span>{' '}
-                                                                            {b.edition}
-                                                                        </div>
-                                                                    )}
-
-                                                                    {b.isbn && (
-                                                                        <div>
-                                                                            <span className="font-medium text-slate-500">
-                                                                                ISBN:
-                                                                            </span>{' '}
-                                                                            {b.isbn}
-                                                                        </div>
-                                                                    )}
-
-                                                                    {b.collation && (
-                                                                        <div>
-                                                                            <span className="font-medium text-slate-500">
-                                                                                Fisik:
-                                                                            </span>{' '}
-                                                                            {b.collation}
-                                                                        </div>
-                                                                    )}
-
-                                                                    {b.call_number && (
-                                                                        <div>
-                                                                            <span className="font-medium text-slate-500">
-                                                                                No.Panggil:
-                                                                            </span>{' '}
-                                                                            {b.call_number}
-                                                                        </div>
-                                                                    )}
+                                                                {/* TITLE (Sekarang Menjadi Tautan / Link) */}
+                                                                <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                                                                    <a
+                                                                        href={b.opac_url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="transition hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                                                                        dangerouslySetInnerHTML={{
+                                                                            __html: highlight(b.title || 'Tanpa Judul', query, currentTheme.text),
+                                                                        }}
+                                                                    />
                                                                 </div>
                                                             </div>
-                                                        </li>
-                                                    </a>
+
+                                                            {/* Tombol Author (Pills) */}
+                                                            {b.authors && b.authors !== '-' && (
+                                                                <div className="mb-4 flex flex-wrap gap-2">
+                                                                    {b.authors.split('||').slice(0, 5).map((author, idx) => (
+                                                                        <button
+                                                                            key={idx}
+                                                                            onClick={(e) => {
+                                                                                e.preventDefault();
+                                                                                e.stopPropagation();
+                                                                                setInput(author.trim());
+                                                                                router.get('/result', { q: author.trim(), tab: 'book' });
+                                                                            }}
+                                                                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 shadow-sm"
+                                                                        >
+                                                                            {author.trim()}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Detail Metadata Text (Tabel Rapi) */}
+                                                            <div className="mt-4 grid grid-cols-[140px_1fr] gap-y-2 text-[13px] text-slate-800 dark:text-slate-200">
+                                                                <div className="font-bold text-slate-900 dark:text-slate-100">Edisi</div>
+                                                                <div>{b.edition && b.edition !== '' ? b.edition : '-'}</div>
+
+                                                                <div className="font-bold text-slate-900 dark:text-slate-100">ISBN/ISSN</div>
+                                                                <div>{b.isbn_issn && b.isbn_issn !== '' ? b.isbn_issn : '-'}</div>
+
+                                                                <div className="font-bold text-slate-900 dark:text-slate-100">Deskripsi Fisik</div>
+                                                                <div>{b.collation && b.collation !== '' ? b.collation : '-'}</div>
+
+                                                                <div className="font-bold text-slate-900 dark:text-slate-100">Judul Seri</div>
+                                                                <div>{b.series_title && b.series_title !== '' ? b.series_title : '-'}</div>
+
+                                                                <div className="font-bold text-slate-900 dark:text-slate-100">No. Panggil</div>
+                                                                <div>{b.call_number && b.call_number !== '' ? b.call_number : '-'}</div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* KANAN: KOTAK KETERSEDIAAN & TOMBOL AKSI */}
+                                                        <div className="shrink-0 w-full sm:w-36 flex flex-col gap-2">
+                                                            {/* Kotak Angka Ketersediaan */}
+                                                            <div className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-4 flex flex-col items-center justify-center text-center shadow-sm">
+                                                                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Ketersediaan</span>
+                                                                <span className="text-4xl font-light text-slate-800 dark:text-slate-100">
+                                                                    {b.total_items ? b.total_items : '0'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </li>
                                                 );
                                             })}
                                         </ul>
@@ -1137,7 +1051,7 @@ export default function Result() {
                                         {/* ================= PAGINATION ================= */}
                                         <Pagination
                                             currentPage={pageBook}
-                                            totalItems={books.length}
+                                            totalItems={totalBooks}
                                             perPage={perPage}
                                             onPageChange={setPageBook}
                                             currentTheme={currentTheme}
@@ -1730,9 +1644,16 @@ export default function Result() {
 
                                             {/* ABSTRACT */}
                                             {item.abstract && (
-                                                <p className="mt-3 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
-                                                    {item.abstract}
-                                                </p>
+                                                <p
+                                                    className="mt-3 line-clamp-2 text-sm text-slate-600 dark:text-slate-300"
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: highlight(
+                                                            item.abstract,
+                                                            query,
+                                                            currentTheme.text,
+                                                        ),
+                                                    }}
+                                                />
                                             )}
 
                                             {/* HOST */}
