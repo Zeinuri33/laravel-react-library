@@ -17,6 +17,7 @@ Route::inertia('result', 'result')->name('result');
 Route::get('/docs/{slug?}', [DokumentasiController::class, 'docs']);
 Route::get('/titikbaca', [EbookController::class, 'titikBaca']);
 Route::get('/titikbaca/{ebook}/baca', [EbookController::class, 'baca']);
+Route::post('/titikbaca/verify-location', [EbookController::class, 'verifyLocation']);
 Route::post('/titikbaca/start-session', [EbookController::class, 'startSession']);
 Route::post('/titikbaca/heartbeat', [EbookController::class, 'heartbeat']);
 Route::post('/titikbaca/end-session', [EbookController::class, 'endSession']);

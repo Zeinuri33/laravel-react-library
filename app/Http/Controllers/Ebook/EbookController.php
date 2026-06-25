@@ -565,8 +565,112 @@ class EbookController extends Controller
         ]);
     }
 
-    public function baca(Ebook $ebook)
+    /**
+     * Verify if the given coordinates are within any active titik baca.
+     */
+    public function verifyLocation(Request $request)
     {
+        $validated = $request->validate([
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+
+        $latitude = (float) $validated['latitude'];
+        $longitude = (float) $validated['longitude'];
+
+        $titiks = Ebook_titik_baca::where('is_active', true)->get();
+
+        $nearestTitik = null;
+        $minDistance = PHP_FLOAT_MAX;
+
+        foreach ($titiks as $titik) {
+            $distance = $this->haversineDistance(
+                $latitude,
+                $longitude,
+                (float) $titik->latitude,
+                (float) $titik->longitude
+            );
+
+            if ($distance <= $titik->radius) {
+                return response()->json([
+                    'allowed' => true,
+                    'message' => 'Lokasi Anda berada dalam area titik baca: ' . $titik->nama,
+                    'titik' => [
+                        'id' => $titik->id,
+                        'nama' => $titik->nama,
+                        'jarak' => round($distance, 1),
+                    ],
+                ]);
+            }
+
+            if ($distance < $minDistance) {
+                $minDistance = $distance;
+                $nearestTitik = $titik;
+            }
+        }
+
+        return response()->json([
+            'allowed' => false,
+            'message' => 'Anda berada di luar area titik baca. Untuk membaca e-book, silakan datang ke lokasi titik baca terdekat.',
+            'nearest_titik' => $nearestTitik ? [
+                'id' => $nearestTitik->id,
+                'nama' => $nearestTitik->nama,
+                'jarak' => round($minDistance, 1),
+            ] : null,
+        ]);
+    }
+
+    /**
+     * Calculate the distance between two coordinates using the Haversine formula.
+     */
+    private function haversineDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371000; // meters
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
+    public function baca(Request $request, Ebook $ebook)
+    {
+        // Verify location if coordinates are provided
+        if ($request->has('lat') && $request->has('lng')) {
+            $latitude = (float) $request->query('lat');
+            $longitude = (float) $request->query('lng');
+
+            $titiks = Ebook_titik_baca::where('is_active', true)->get();
+            $isAllowed = false;
+
+            foreach ($titiks as $titik) {
+                $distance = $this->haversineDistance(
+                    $latitude,
+                    $longitude,
+                    (float) $titik->latitude,
+                    (float) $titik->longitude
+                );
+
+                if ($distance <= $titik->radius) {
+                    $isAllowed = true;
+                    break;
+                }
+            }
+
+            if (!$isAllowed) {
+                return redirect('/titikbaca')->with(
+                    'error',
+                    'Anda berada di luar area titik baca. Silakan datang ke lokasi titik baca untuk membaca e-book.'
+                );
+            }
+        }
+
         $ebook->load('klasifikasi');
         $ebook->loadCount('bacaHistories');
 

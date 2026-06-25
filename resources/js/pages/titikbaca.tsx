@@ -1,7 +1,7 @@
 'use client';
 
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useState, useMemo } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search,
@@ -21,6 +21,7 @@ import {
     Filter,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { toast } from 'sonner';
 import AppearanceTabs from '@/components/appearance-tabs';
 import Footer from '@/layouts/footer';
 
@@ -127,6 +128,61 @@ export default function TitikBacaPage({
             return next;
         });
     };
+
+    const handleReadEbook = useCallback(async (ebookId: number) => {
+        if (!navigator.geolocation) {
+            toast.error('Browser Anda tidak mendukung geolokasi');
+            return;
+        }
+
+        const loadingToast = toast.loading('Memeriksa lokasi titik baca...');
+
+        try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 30000,
+                });
+            });
+
+            const { latitude, longitude } = position.coords;
+
+            const csrfToken =
+                document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+
+            const response = await fetch('/titikbaca/verify-location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ latitude, longitude }),
+            });
+
+            const data = await response.json();
+
+            toast.dismiss(loadingToast);
+
+            if (data.allowed) {
+                router.visit(`/titikbaca/${ebookId}/baca?lat=${latitude}&lng=${longitude}`);
+            } else {
+                toast.error(data.message, { duration: 6000 });
+            }
+        } catch (error: any) {
+            toast.dismiss(loadingToast);
+
+            if (error.code === 1) {
+                toast.error('Izinkan akses lokasi untuk membaca e-book', { duration: 5000 });
+            } else if (error.code === 2) {
+                toast.error('Tidak dapat menentukan lokasi. Coba lagi.', { duration: 5000 });
+            } else if (error.code === 3) {
+                toast.error('Waktu permintaan lokasi habis. Coba lagi.', { duration: 5000 });
+            } else {
+                toast.error('Gagal memeriksa lokasi. Silakan coba lagi.', { duration: 5000 });
+            }
+        }
+    }, []);
 
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -566,12 +622,12 @@ export default function TitikBacaPage({
                                             {/* Overlay */}
                                             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/50 via-black/20 to-transparent opacity-0 transition-all duration-300 group-hover:opacity-100">
                                                 {ebook.file && (
-                                                    <Link
-                                                        href={`/titikbaca/${ebook.id}/baca`}
-                                                        className={`translate-y-4 scale-90 rounded-lg px-4 py-2 text-xs font-semibold text-white shadow-lg opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient}`}
+                                                    <button
+                                                        onClick={() => handleReadEbook(ebook.id)}
+                                                        className={`translate-y-4 scale-90 rounded-lg px-4 py-2 text-xs font-semibold text-white shadow-lg opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient} cursor-pointer`}
                                                     >
                                                         Baca
-                                                    </Link>
+                                                    </button>
                                                 )}
                                             </div>
                                             {/* Category badge */}
@@ -1043,12 +1099,12 @@ export default function TitikBacaPage({
                                                 {/* Hover overlay with CTA */}
                                                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100">
                                                     {ebook.file && (
-                                                        <Link
-                                                            href={`/titikbaca/${ebook.id}/baca`}
-                                                            className={`translate-y-6 scale-90 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-lg opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient} ${tc.shadow}`}
+                                                        <button
+                                                            onClick={() => handleReadEbook(ebook.id)}
+                                                            className={`translate-y-6 scale-90 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-lg opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient} ${tc.shadow} cursor-pointer`}
                                                         >
                                                             Baca
-                                                        </Link>
+                                                        </button>
                                                     )}
                                                 </div>
 

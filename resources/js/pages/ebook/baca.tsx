@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import { Head, Link, router } from '@inertiajs/react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +36,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
     const [viewMode, setViewMode] = useState<'single' | 'double'>('single');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showNavbars, setShowNavbars] = useState(true);
+    const [locationChecking, setLocationChecking] = useState(false);
     const hideNavbarsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [sessionDuration, setSessionDuration] = useState(0);
@@ -47,6 +49,72 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
     const viewerRef = useRef<HTMLDivElement>(null);
     const pageDimensionsRef = useRef<{ width: number; height: number } | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Verify location on mount
+    useEffect(() => {
+        const verifyLocationOnMount = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const lat = urlParams.get('lat');
+            const lng = urlParams.get('lng');
+
+            if (lat && lng) {
+                // Location already verified by titikbaca page and backend baca method
+                setLocationChecking(false);
+                return;
+            }
+
+            // No location data — try to get it now
+            if (!navigator.geolocation) {
+                toast.error('Browser Anda tidak mendukung geolokasi');
+                router.visit('/titikbaca');
+                return;
+            }
+
+            try {
+                const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 30000,
+                    });
+                });
+
+                const { latitude, longitude } = position.coords;
+
+                const csrfToken =
+                    document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+
+                const response = await fetch('/titikbaca/verify-location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ latitude, longitude }),
+                });
+
+                const data = await response.json();
+
+                if (data.allowed) {
+                    setLocationChecking(false);
+                } else {
+                    toast.error(data.message, { duration: 6000 });
+                    router.visit('/titikbaca');
+                }
+            } catch (error: any) {
+                if (error.code === 1) {
+                    toast.error('Izinkan akses lokasi untuk membaca e-book', { duration: 5000 });
+                } else {
+                    toast.error('Gagal memverifikasi lokasi', { duration: 5000 });
+                }
+                router.visit('/titikbaca');
+            } finally {
+                setLocationChecking(false);
+            }
+        };
+
+        verifyLocationOnMount();
+    }, []);
 
     // Keep refs in sync
     useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
@@ -803,6 +871,18 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                     <p>E-book hanya bisa dibaca secara online. Mohon tidak menyebarkan konten tanpa izin.</p>
                 </div>
             </div>
+
+            {/* LOCATION CHECK OVERLAY — shown on top while verifying */}
+            {locationChecking && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-sm dark:bg-slate-950/80">
+                    <div className="text-center">
+                        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+                        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                            Memeriksa lokasi titik baca...
+                        </p>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

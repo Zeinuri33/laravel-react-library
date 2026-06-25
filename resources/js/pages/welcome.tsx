@@ -259,6 +259,12 @@ export default function Welcome() {
             icon: Book,
         },
         {
+            title: 'Titik Baca',
+            desc: 'Temukan dan baca e-book berdasarkan lokasi-lokasi titik baca.',
+            href: '/titikbaca',
+            icon: MapPin,
+        },
+        {
             title: 'Jurnal Perpustakaan',
             desc: 'Kumpulan jurnal akademik dan ilmiah terbaru.',
             href: 'https://imjiss.ibrahimy.ac.id/',
