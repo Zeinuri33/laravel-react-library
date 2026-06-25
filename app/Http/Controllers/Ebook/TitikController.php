@@ -13,7 +13,9 @@ class TitikController extends Controller
     //
     public function index()
     {
-        $titiks = Ebook_titik_baca::latest()->get();
+        $titiks = Ebook_titik_baca::withCount('bacaHistories as total_akses')
+            ->latest()
+            ->get();
 
         return Inertia::render('ebook/titikbaca/page', [
             'titiks' => $titiks,

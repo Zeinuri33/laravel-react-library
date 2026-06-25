@@ -101,6 +101,10 @@ export default function TitikBacaPage({
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [showFilterSidebar, setShowFilterSidebar] = useState(false);
     const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
+    const [currentTitik, setCurrentTitik] = useState<{ id: number; nama: string; jarak: number } | null>(null);
+    const [locationChecking, setLocationChecking] = useState(false);
+    const [locationError, setLocationError] = useState<string | null>(null);
+    const [diluarArea, setDiluarArea] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -117,6 +121,60 @@ export default function TitikBacaPage({
             const saved = localStorage.getItem('titikbaca_bookmarks');
             if (saved) setBookmarkedIds(new Set(JSON.parse(saved)));
         } catch {}
+    }, []);
+
+    // Detect current location on mount to show which titik baca the user is in
+    useEffect(() => {
+        if (!navigator.geolocation) {
+            setLocationError('Browser tidak mendukung geolokasi');
+            return;
+        }
+
+        setLocationChecking(true);
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                const csrfToken =
+                    document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+
+                try {
+                    const response = await fetch('/titikbaca/verify-location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({ latitude, longitude }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.allowed && data.titik) {
+                        setCurrentTitik(data.titik);
+                        setDiluarArea(false);
+                    } else if (!data.allowed) {
+                        setDiluarArea(true);
+                    }
+                } catch (e) {
+                    console.error('Failed to detect location:', e);
+                } finally {
+                    setLocationChecking(false);
+                }
+            },
+            (error) => {
+                setLocationChecking(false);
+                if (error.code === 1) {
+                    setLocationError('Izinkan akses lokasi untuk mendeteksi titik baca');
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 30000,
+            }
+        );
     }, []);
 
     const toggleBookmark = (id: number) => {
@@ -165,7 +223,12 @@ export default function TitikBacaPage({
             toast.dismiss(loadingToast);
 
             if (data.allowed) {
-                router.visit(`/titikbaca/${ebookId}/baca?lat=${latitude}&lng=${longitude}`);
+                const titikId = data.titik?.id;
+                let url = `/titikbaca/${ebookId}/baca?lat=${latitude}&lng=${longitude}`;
+                if (titikId) {
+                    url += `&titik_id=${titikId}`;
+                }
+                router.visit(url);
             } else {
                 toast.error(data.message, { duration: 6000 });
             }
@@ -526,6 +589,157 @@ export default function TitikBacaPage({
                                 )}
                             </motion.div>
                         </motion.div>
+
+                        {/* Location banner - shows current titik baca */}
+                        {locationChecking && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2, duration: 0.5 }}
+                                className="mx-auto mt-8 max-w-2xl"
+                            >
+                                <div className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white/60 px-5 py-3 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-slate-900/60">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-300" />
+                                    <span className="text-sm text-gray-400 dark:text-gray-500">
+                                        Mendeteksi lokasi titik baca...
+                                    </span>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {currentTitik && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
+                                className="mx-auto mt-8 max-w-2xl"
+                            >
+                                <div
+                                    className={`group relative overflow-hidden rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50/80 to-white/80 px-5 py-4 shadow-lg shadow-emerald-500/5 backdrop-blur-sm transition-all duration-300 hover:shadow-emerald-500/10 dark:border-emerald-800/40 dark:from-emerald-950/40 dark:to-slate-900/80`}
+                                >
+                                    {/* Glow effect */}
+                                    <div className="pointer-events-none absolute -inset-1 rounded-2xl opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-40 dark:opacity-20 dark:group-hover:opacity-30"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${themeAccent === 'red' ? '#ef4444' : themeAccent === 'indigo' ? '#6366f1' : '#10b981'}, transparent)`,
+                                        }}
+                                    />
+
+                                    <div className="relative flex items-center gap-4">
+                                        {/* Icon */}
+                                        <div
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                                                themeAccent === 'red'
+                                                    ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                                    : themeAccent === 'indigo'
+                                                      ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
+                                                      : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                            }`}
+                                        >
+                                            <MapPin className="h-5 w-5" />
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                                Lokasi Titik Baca
+                                            </p>
+                                            <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
+                                                {currentTitik.nama}
+                                            </p>
+                                        </div>
+
+                                        {/* Distance badge */}
+                                        <div className="shrink-0">
+                                            <div
+                                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                                                    themeAccent === 'red'
+                                                        ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                                                        : themeAccent === 'indigo'
+                                                          ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
+                                                          : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                                }`}
+                                            >
+                                                {currentTitik.jarak < 1
+                                                    ? '< 1 m'
+                                                    : `${Math.round(currentTitik.jarak)} m`}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom accent bar */}
+                                    <div
+                                        className={`absolute bottom-0 left-0 h-0.5 w-full ${
+                                            themeAccent === 'red'
+                                                ? 'bg-gradient-to-r from-red-400 to-red-500'
+                                                : themeAccent === 'indigo'
+                                                  ? 'bg-gradient-to-r from-indigo-400 to-indigo-500'
+                                                  : 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                                        }`}
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {locationError && !currentTitik && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2, duration: 0.5 }}
+                                className="mx-auto mt-8 max-w-2xl"
+                            >
+                                <div className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200/60 bg-amber-50/60 px-5 py-3 shadow-sm backdrop-blur-sm dark:border-amber-800/30 dark:bg-amber-950/30">
+                                    <MapPin className="h-4 w-4 text-amber-500" />
+                                    <span className="text-sm text-amber-600 dark:text-amber-400">
+                                        {locationError}
+                                    </span>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {diluarArea && !currentTitik && !locationChecking && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
+                                className="mx-auto mt-8 max-w-2xl"
+                            >
+                                <div className="group relative overflow-hidden rounded-2xl border border-orange-200/60 bg-gradient-to-r from-orange-50/80 to-amber-50/80 px-5 py-4 shadow-lg shadow-orange-500/5 backdrop-blur-sm transition-all duration-300 hover:shadow-orange-500/10 dark:border-orange-800/40 dark:from-orange-950/40 dark:to-amber-950/40">
+                                    {/* Glow effect */}
+                                    <div className="pointer-events-none absolute -inset-1 rounded-2xl opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-40 dark:opacity-20 dark:group-hover:opacity-30"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #f97316, transparent)',
+                                        }}
+                                    />
+
+                                    <div className="relative flex items-center gap-4">
+                                        {/* Icon */}
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                                            <MapPin className="h-5 w-5" />
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-medium uppercase tracking-wider text-orange-400 dark:text-orange-500">
+                                                Lokasi Anda
+                                            </p>
+                                            <p className="text-sm font-bold text-orange-700 dark:text-orange-300">
+                                                Anda Berada di Luar Area Titik Baca
+                                            </p>
+                                        </div>
+
+                                        {/* Hint badge */}
+                                        <div className="hidden shrink-0 sm:block">
+                                            <div className="rounded-lg bg-orange-100/80 px-3 py-1.5 text-[10px] font-medium text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
+                                                Cari titik baca terdekat
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom accent bar */}
+                                    <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-orange-400 to-amber-500" />
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Search bar - prominent in hero */}
                         <motion.div

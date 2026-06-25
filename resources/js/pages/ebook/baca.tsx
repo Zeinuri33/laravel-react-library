@@ -127,10 +127,16 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
 
         const startSession = async () => {
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const titikId = urlParams.get('titik_id');
+
                 const res = await fetch('/titikbaca/start-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '' },
-                    body: JSON.stringify({ ebook_id: ebook.id }),
+                    body: JSON.stringify({
+                        ebook_id: ebook.id,
+                        titik_baca_id: titikId ? parseInt(titikId) : null,
+                    }),
                 });
                 const data = await res.json();
                 sessionIdRef.current = data.session_id;

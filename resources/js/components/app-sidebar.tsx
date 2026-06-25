@@ -70,7 +70,7 @@ export function AppSidebar() {
         ...(can('lihat-ebook') ? [{ title: 'E-Book', href: '/list-ebooks' }] : []),
         ...(can('lihat-klasifikasi_ebook') ? [{ title: 'Klasifikasi', href: '/klasifikasi-ebooks' }] : []),
         ...(can('lihat-titik_ebook') ? [{ title: 'Titik Baca', href: '/titik-ebooks' }] : []),
-        ...(can('lihat-ebook_user') ? [{ title: 'User Ebook', href: '/ebook-users' }] : []),
+        // ...(can('lihat-ebook_user') ? [{ title: 'User Ebook', href: '/ebook-users' }] : []),
     ]
 
     const groups = [

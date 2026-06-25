@@ -699,12 +699,14 @@ class EbookController extends Controller
     {
         $validated = $request->validate([
             'ebook_id' => ['required', 'exists:ebooks,id'],
+            'titik_baca_id' => ['nullable', 'exists:ebook_titik_bacas,id'],
         ]);
 
         $sessionId = Str::uuid()->toString();
 
         $history = EbookBacaHistory::create([
             'ebook_id' => $validated['ebook_id'],
+            'titik_baca_id' => $validated['titik_baca_id'] ?? null,
             'session_id' => $sessionId,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),

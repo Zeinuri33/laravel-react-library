@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import {
     MoreHorizontal,
+    Eye,
 } from "lucide-react"
 
 import { router, Link } from "@inertiajs/react"
@@ -41,6 +42,7 @@ export type Titik = {
     longitude: number
     radius: number
     is_active: boolean
+    total_akses: number
     created_at: string
     updated_at: string
 }
@@ -116,6 +118,28 @@ export const columns: ColumnDef<Titik>[] = [
     {
         accessorKey: "longitude",
         header: "Longitude",
+    },
+
+    {
+        accessorKey: "total_akses",
+
+        header: ({ column }) => (
+            <DataTableSortHeader column={column}>
+                Jumlah Akses
+            </DataTableSortHeader>
+        ),
+
+        cell: ({ row }) => (
+            <div className="ms-4 flex items-center gap-1.5">
+                <Eye className="h-3.5 w-3.5 text-gray-400" />
+                <span className="font-medium">
+                    {row.original.total_akses ?? 0}
+                </span>
+                <span className="text-xs text-gray-400">
+                    kali
+                </span>
+            </div>
+        ),
     },
 
     {

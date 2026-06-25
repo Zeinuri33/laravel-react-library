@@ -23,6 +23,11 @@ class EbookBacaHistory extends Model
         return $this->belongsTo(Ebook::class);
     }
 
+    public function titikBaca()
+    {
+        return $this->belongsTo(Ebook_titik_baca::class, 'titik_baca_id');
+    }
+
     public function scopeActiveSession($query)
     {
         return $query->whereNull('ended_at');
