@@ -42,7 +42,7 @@ createInertiaApp({
       return AppLayout;
   }
 },
-  strictMode: true,
+  strictMode: false,
   withApp(app) {
     return (
     <ThemeProvider>

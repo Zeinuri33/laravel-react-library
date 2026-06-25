@@ -354,7 +354,7 @@ export default function TitikBacaPage({
         return [...ebooks]
             .filter((b) => (b.baca_histories_count ?? 0) > 0)
             .sort((a, b) => (b.baca_histories_count ?? 0) - (a.baca_histories_count ?? 0))
-            .slice(0, 5);
+            .slice(0, 6);
     }, [ebooks]);
 
     return (
@@ -810,7 +810,7 @@ export default function TitikBacaPage({
                                 </Link>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                                 {popularEbooks.map((ebook, i) => (
                                     <motion.div
                                         key={ebook.id}
@@ -1284,7 +1284,7 @@ export default function TitikBacaPage({
                             {/* Ebook Grid */}
                             {filteredEbooks.length > 0 ? (
                                 <motion.div
-                                    className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                                    className="grid grid-cols-3 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                                     variants={containerVariants}
                                     initial="hidden"
                                     animate="show"
