@@ -302,7 +302,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
         const heightScale = availableHeight / dims.height;
 
         const optimalScale = Math.min(widthScale, heightScale, 2.5);
-        setScale(Math.max(0.5, Math.round(optimalScale * 10) / 10));
+        setScale(Math.max(0.1, Math.round(optimalScale * 10) / 10));
     }, [viewMode, isFullscreen]);
 
     const onDocumentLoadSuccess = async (pdf: { numPages: number; getPage: (n: number) => Promise<{ getViewport: (opts: { scale: number }) => { width: number; height: number } }> }) => {
@@ -512,7 +512,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                         {/* Zoom controls */}
                         <div className="flex items-center gap-1">
                             <button
-                                onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}
+                                onClick={() => setScale((s) => Math.max(0.1, s - 0.1))}
                                 className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                             >
                                 <Minus className="h-3.5 w-3.5" />
