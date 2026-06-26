@@ -68,8 +68,7 @@ export function AppSidebar() {
 
     const ebookChildren = [
         ...(can('lihat-ebook') ? [{ title: 'E-Book', href: '/list-ebooks' }] : []),
-        ...(can('lihat-klasifikasi_ebook') ? [{ title: 'Klasifikasi', href: '/klasifikasi-ebooks' }] : []),
-        ...(can('lihat-titik_ebook') ? [{ title: 'Titik Baca', href: '/titik-ebooks' }] : []),
+        ...(can('lihat-klasifikasi_ebook') ? [{ title: 'Klasifikasi', href: '/klasifikasi-ebooks' }] : []),                        ...(can('lihat-titik_ebook') ? [{ title: 'Zona Baca', href: '/titik-ebooks' }] : []),
         // ...(can('lihat-ebook_user') ? [{ title: 'User Ebook', href: '/ebook-users' }] : []),
     ]
 
@@ -100,7 +99,7 @@ export function AppSidebar() {
                 },
                 ...(ebookChildren.length > 0
                     ? [{
-                        title: 'Titik Baca',
+                        title: 'Zona Baca',
                         icon: MapPin,
                         children: ebookChildren,
                     }]

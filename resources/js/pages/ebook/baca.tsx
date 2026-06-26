@@ -58,7 +58,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
             const lng = urlParams.get('lng');
 
             if (lat && lng) {
-                // Location already verified by titikbaca page and backend baca method
+                // Location already verified by zonabaca page and backend baca method
                 setLocationChecking(false);
                 return;
             }
@@ -66,7 +66,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
             // No location data — try to get it now
             if (!navigator.geolocation) {
                 toast.error('Browser Anda tidak mendukung geolokasi');
-                router.visit('/titikbaca');
+                router.visit('/zonabaca');
                 return;
             }
 
@@ -84,7 +84,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                 const csrfToken =
                     document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
 
-                const response = await fetch('/titikbaca/verify-location', {
+                const response = await fetch('/zonabaca/verify-location', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                     setLocationChecking(false);
                 } else {
                     toast.error(data.message, { duration: 6000 });
-                    router.visit('/titikbaca');
+                    router.visit('/zonabaca');
                 }
             } catch (error: any) {
                 if (error.code === 1) {
@@ -107,7 +107,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                 } else {
                     toast.error('Gagal memverifikasi lokasi', { duration: 5000 });
                 }
-                router.visit('/titikbaca');
+                router.visit('/zonabaca');
             } finally {
                 setLocationChecking(false);
             }
@@ -130,7 +130,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                 const urlParams = new URLSearchParams(window.location.search);
                 const titikId = urlParams.get('titik_id');
 
-                const res = await fetch('/titikbaca/start-session', {
+                const res = await fetch('/zonabaca/start-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '' },
                     body: JSON.stringify({
@@ -152,7 +152,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
             const sid = sessionIdRef.current;
             if (sid) {
                 navigator.sendBeacon(
-                    '/titikbaca/end-session',
+                    '/zonabaca/end-session',
                     JSON.stringify({
                         session_id: sid,
                         current_page: pageNumberRef.current,
@@ -167,7 +167,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
     const sendHeartbeat = useCallback(() => {
         if (!sessionId) return;
 
-        fetch('/titikbaca/heartbeat', {
+        fetch('/zonabaca/heartbeat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '' },
             body: JSON.stringify({
@@ -419,7 +419,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                         File e-book tidak tersedia
                     </h2>
                     <Link
-                        href="/titikbaca"
+                        href="/zonabaca"
                         className="mt-4 inline-block text-sm text-emerald-500 hover:underline"
                     >
                         Kembali ke daftar
@@ -447,7 +447,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                     {/* LEFT: Back + Title */}
                     <div className="flex items-center gap-3 min-w-0">
                         <Link
-                            href="/titikbaca"
+                            href="/zonabaca"
                             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                         >
                             <ChevronLeft className="h-5 w-5" />
@@ -884,7 +884,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                     <div className="text-center">
                         <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
                         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                            Memeriksa lokasi titik baca...
+                            Memeriksa lokasi zona baca...
                         </p>
                     </div>
                 </div>

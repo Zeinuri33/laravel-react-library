@@ -43,7 +43,7 @@ type Ebook = {
     total_menit_baca?: number;
 };
 
-type TitikBaca = {
+type ZonaBaca = {
     id: number;
     nama: string;
     latitude: number;
@@ -85,12 +85,12 @@ const fadeUp = {
     },
 };
 
-export default function TitikBacaPage({
+export default function ZonaBacaPage({
     ebooks,
     titiks,
 }: {
     ebooks: Ebook[];
-    titiks: TitikBaca[];
+    titiks: ZonaBaca[];
 }) {
     const { themeAccent, setThemeAccent } = useTheme();
     const { auth } = usePage().props;
@@ -118,12 +118,12 @@ export default function TitikBacaPage({
     // Load bookmarks from localStorage
     useEffect(() => {
         try {
-            const saved = localStorage.getItem('titikbaca_bookmarks');
+            const saved = localStorage.getItem('zonabaca_bookmarks');
             if (saved) setBookmarkedIds(new Set(JSON.parse(saved)));
         } catch {}
     }, []);
 
-    // Detect current location on mount to show which titik baca the user is in
+    // Detect current location on mount to show which zona baca the user is in
     useEffect(() => {
         if (!navigator.geolocation) {
             setLocationError('Browser tidak mendukung geolokasi');
@@ -140,7 +140,7 @@ export default function TitikBacaPage({
                     document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
 
                 try {
-                    const response = await fetch('/titikbaca/verify-location', {
+                    const response = await fetch('/zonabaca/verify-location', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ export default function TitikBacaPage({
             (error) => {
                 setLocationChecking(false);
                 if (error.code === 1) {
-                    setLocationError('Izinkan akses lokasi untuk mendeteksi titik baca');
+                    setLocationError('Izinkan akses lokasi untuk mendeteksi zona baca');
                 }
             },
             {
@@ -182,7 +182,7 @@ export default function TitikBacaPage({
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
             else next.add(id);
-            localStorage.setItem('titikbaca_bookmarks', JSON.stringify([...next]));
+            localStorage.setItem('zonabaca_bookmarks', JSON.stringify([...next]));
             return next;
         });
     };
@@ -193,7 +193,7 @@ export default function TitikBacaPage({
             return;
         }
 
-        const loadingToast = toast.loading('Memeriksa lokasi titik baca...');
+        const loadingToast = toast.loading('Memeriksa lokasi zona baca...');
 
         try {
             const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -209,7 +209,7 @@ export default function TitikBacaPage({
             const csrfToken =
                 document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
 
-            const response = await fetch('/titikbaca/verify-location', {
+            const response = await fetch('/zonabaca/verify-location', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -224,7 +224,7 @@ export default function TitikBacaPage({
 
             if (data.allowed) {
                 const titikId = data.titik?.id;
-                let url = `/titikbaca/${ebookId}/baca?lat=${latitude}&lng=${longitude}`;
+                let url = `/zonabaca/${ebookId}/baca?lat=${latitude}&lng=${longitude}`;
                 if (titikId) {
                     url += `&titik_id=${titikId}`;
                 }
@@ -574,7 +574,7 @@ export default function TitikBacaPage({
                                         <MapPin className={`h-3.5 w-3.5 ${tc.text}`} />
                                         <span className="text-gray-600 dark:text-gray-400">
                                             <span className={`font-semibold ${tc.text}`}>{titiks.length}</span>{' '}
-                                            Titik Baca
+                                            Zona Baca
                                         </span>
                                     </div>
                                 )}
@@ -590,7 +590,7 @@ export default function TitikBacaPage({
                             </motion.div>
                         </motion.div>
 
-                        {/* Location banner - shows current titik baca */}
+                        {/* Location banner - shows current zona baca */}
                         {locationChecking && (
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
@@ -601,7 +601,7 @@ export default function TitikBacaPage({
                                 <div className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white/60 px-5 py-3 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-slate-900/60">
                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-300" />
                                     <span className="text-sm text-gray-400 dark:text-gray-500">
-                                        Mendeteksi lokasi titik baca...
+                                        Mendeteksi lokasi zona baca...
                                     </span>
                                 </div>
                             </motion.div>
@@ -641,7 +641,7 @@ export default function TitikBacaPage({
                                         {/* Content */}
                                         <div className="min-w-0 flex-1">
                                             <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                                                Lokasi Titik Baca
+                                                Lokasi Zona Baca
                                             </p>
                                             <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
                                                 {currentTitik.nama}
@@ -723,14 +723,14 @@ export default function TitikBacaPage({
                                                 Lokasi Anda
                                             </p>
                                             <p className="text-sm font-bold text-orange-700 dark:text-orange-300">
-                                                Anda Berada di Luar Area Titik Baca
+                                                Anda Berada di Luar Area Zona Baca
                                             </p>
                                         </div>
 
                                         {/* Hint badge */}
                                         <div className="hidden shrink-0 sm:block">
                                             <div className="rounded-lg bg-orange-100/80 px-3 py-1.5 text-[10px] font-medium text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
-                                                Cari titik baca terdekat
+                                                Cari zona baca terdekat
                                             </div>
                                         </div>
                                     </div>

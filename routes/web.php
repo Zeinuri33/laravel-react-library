@@ -15,12 +15,12 @@ use App\Http\Controllers\DashboardController;
 Route::inertia('/', 'welcome')->name('home');
 Route::inertia('result', 'result')->name('result');
 Route::get('/docs/{slug?}', [DokumentasiController::class, 'docs']);
-Route::get('/titikbaca', [EbookController::class, 'titikBaca']);
-Route::get('/titikbaca/{ebook}/baca', [EbookController::class, 'baca']);
-Route::post('/titikbaca/verify-location', [EbookController::class, 'verifyLocation']);
-Route::post('/titikbaca/start-session', [EbookController::class, 'startSession']);
-Route::post('/titikbaca/heartbeat', [EbookController::class, 'heartbeat']);
-Route::post('/titikbaca/end-session', [EbookController::class, 'endSession']);
+Route::get('/zonabaca', [EbookController::class, 'zonaBaca']);
+Route::get('/zonabaca/{ebook}/baca', [EbookController::class, 'baca']);
+Route::post('/zonabaca/verify-location', [EbookController::class, 'verifyLocation']);
+Route::post('/zonabaca/start-session', [EbookController::class, 'startSession']);
+Route::post('/zonabaca/heartbeat', [EbookController::class, 'heartbeat']);
+Route::post('/zonabaca/end-session', [EbookController::class, 'endSession']);
 
 //USULAN
 Route::post('/usulan', [UsulanController::class, 'store'])->name('usulan.store');

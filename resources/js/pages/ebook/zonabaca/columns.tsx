@@ -51,12 +51,12 @@ const handleDelete = (titik: Titik) => {
     router.delete(`/titik-ebooks/${titik.id}`, {
         onSuccess: () => {
             toast.success(
-                "Titik baca berhasil dihapus"
+                "Zona baca berhasil dihapus"
             )
         },
         onError: () => {
             toast.error(
-                "Gagal menghapus titik baca"
+                "Gagal menghapus zona baca"
             )
         },
     })
@@ -216,7 +216,7 @@ export const columns: ColumnDef<Titik>[] = [
                             <AlertDialogContent size="sm">
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>
-                                        Hapus Titik Baca
+                                        Hapus Zona Baca
                                     </AlertDialogTitle>
 
                                     <AlertDialogDescription>

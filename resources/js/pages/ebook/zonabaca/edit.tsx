@@ -91,7 +91,7 @@ export default function EditTitikBaca({
         put(`/titik-ebooks/${titik.id}`, {
             onSuccess: () => {
                 toast.success(
-                    "Titik baca berhasil diperbarui"
+                    "Zona baca berhasil diperbarui"
                 )
             },
         })
@@ -111,12 +111,12 @@ export default function EditTitikBaca({
 
     return (
     <>
-        <Head title="Edit Titik Baca" />
+        <Head title="Edit Zona Baca" />
             <div className="p-6 space-y-4">
                 <div className="flex justify-between">
                     <Heading
                         variant="small"
-                        title="Edit Titik Baca"
+                        title="Edit Zona Baca"
                         description="Edit lokasi akses e-book."
                     />
                     <Link href="/titik-ebooks">
@@ -208,7 +208,7 @@ export default function EditTitikBaca({
                     <div className="flex-1 overflow-y-auto px-4 py-2">
                         <form id="ebook-form" onSubmit={submit} className="space-y-4">
                             <div>
-                                <Label className="mb-2 block">Nama Titik Baca</Label>
+                                <Label className="mb-2 block">Nama Zona Baca</Label>
                                 <Input
                                     placeholder="Contoh: Gazebo Fakultas Tarbiyah"
                                     value={data.nama}
@@ -323,7 +323,7 @@ export default function EditTitikBaca({
                             disabled={processing}
                             className="w-full"
                         >
-                            Update Titik Baca
+                            Update Zona Baca
                         </Button>
                     </div>
                 </div>
@@ -336,7 +336,7 @@ export default function EditTitikBaca({
 EditTitikBaca.layout = {
     breadcrumbs: [
         {
-            title: "Titik Baca",
+            title: "Zona Baca",
             href: "/titik-ebooks",
         },
         {

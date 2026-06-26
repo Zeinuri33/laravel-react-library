@@ -28,20 +28,20 @@ export default function Page({
 
     return (
         <>
-            <Head title="Titik Baca E-Book" />
+            <Head title="Zona Baca E-Book" />
 
             <div className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                     <Heading
                         variant="small"
-                        title="Data Titik Baca"
+                        title="Data Zona Baca"
                         description="Daftar lokasi akses e-book."
                     />
 
                     <Button asChild>
                         <Link href="/titik-ebooks/create">
                             <Plus className="mr-2 h-4 w-4" />
-                            Tambah Titik Baca
+                            Tambah Zona Baca
                         </Link>
                     </Button>
                 </div>
@@ -58,7 +58,7 @@ export default function Page({
 Page.layout = {
     breadcrumbs: [
         {
-            title: "Titik Baca",
+            title: "Zona Baca",
             href: "/titik-ebooks",
         },
     ],

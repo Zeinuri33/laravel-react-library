@@ -17,14 +17,14 @@ class TitikController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('ebook/titikbaca/page', [
+        return Inertia::render('ebook/zonabaca/page', [
             'titiks' => $titiks,
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('ebook/titikbaca/create');
+        return Inertia::render('ebook/zonabaca/create');
     }
 
     public function store(Request $request)
@@ -39,12 +39,12 @@ class TitikController extends Controller
 
         Ebook_titik_baca::create($validated);
 
-        return redirect('/titik-ebooks')->with('success', 'Titik baca berhasil ditambahkan');
+        return redirect('/titik-ebooks')->with('success', 'Zona baca berhasil ditambahkan');
     }
 
     public function edit(Ebook_titik_baca $ebook)
     {
-        return Inertia::render('ebook/titikbaca/edit', [
+        return Inertia::render('ebook/zonabaca/edit', [
             'titik' => $ebook,
         ]);
     }
@@ -61,13 +61,13 @@ class TitikController extends Controller
 
         $ebook->update($validated);
 
-        return redirect('/titik-ebooks')->with('success', 'Titik baca berhasil diperbarui');
+        return redirect('/titik-ebooks')->with('success', 'Zona baca berhasil diperbarui');
     }
 
     public function destroy(Ebook_titik_baca $ebook)
     {
         $ebook->delete();
 
-        return redirect('/titik-ebooks')->with('success', 'Titik baca berhasil dihapus');
+        return redirect('/titik-ebooks')->with('success', 'Zona baca berhasil dihapus');
     }
 }

@@ -259,9 +259,9 @@ export default function Welcome() {
             icon: Book,
         },
         {
-            title: 'Titik Baca',
-            desc: 'Temukan dan baca e-book berdasarkan lokasi-lokasi titik baca.',
-            href: '/titikbaca',
+            title: 'Zona Baca',
+            desc: 'Temukan dan baca e-book berdasarkan lokasi-lokasi zona baca.',
+            href: '/zonabaca',
             icon: MapPin,
         },
         {

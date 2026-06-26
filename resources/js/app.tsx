@@ -23,10 +23,10 @@ createInertiaApp({
     case name === 'docs' :
       return null;
 
-    case name === 'titikbaca':
+    case name === 'zonabaca':
       return null;
 
-    case name.startsWith('titikbaca/'):
+    case name.startsWith('zonabaca/'):
       return null;
 
     case name === 'ebook/baca':

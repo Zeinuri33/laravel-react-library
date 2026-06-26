@@ -549,7 +549,7 @@ class EbookController extends Controller
     }
 
 
-    public function titikBaca()
+    public function zonaBaca()
     {
         $ebooks = Ebook::with('klasifikasi')
             ->withCount('bacaHistories')
@@ -559,14 +559,14 @@ class EbookController extends Controller
 
         $titiks = Ebook_titik_baca::where('is_active', true)->get();
 
-        return Inertia::render('titikbaca', [
+        return Inertia::render('zonabaca', [
             'ebooks' => $ebooks,
             'titiks' => $titiks,
         ]);
     }
 
     /**
-     * Verify if the given coordinates are within any active titik baca.
+     * Verify if the given coordinates are within any active zona baca.
      */
     public function verifyLocation(Request $request)
     {
@@ -594,7 +594,7 @@ class EbookController extends Controller
             if ($distance <= $titik->radius) {
                 return response()->json([
                     'allowed' => true,
-                    'message' => 'Lokasi Anda berada dalam area titik baca: ' . $titik->nama,
+                    'message' => 'Lokasi Anda berada dalam area zona baca: ' . $titik->nama,
                     'titik' => [
                         'id' => $titik->id,
                         'nama' => $titik->nama,
@@ -611,7 +611,7 @@ class EbookController extends Controller
 
         return response()->json([
             'allowed' => false,
-            'message' => 'Anda berada di luar area titik baca. Untuk membaca e-book, silakan datang ke lokasi titik baca terdekat.',
+            'message' => 'Anda berada di luar area zona baca. Untuk membaca e-book, silakan datang ke lokasi zona baca terdekat.',
             'nearest_titik' => $nearestTitik ? [
                 'id' => $nearestTitik->id,
                 'nama' => $nearestTitik->nama,
@@ -664,9 +664,9 @@ class EbookController extends Controller
             }
 
             if (!$isAllowed) {
-                return redirect('/titikbaca')->with(
+                return redirect('/zonabaca')->with(
                     'error',
-                    'Anda berada di luar area titik baca. Silakan datang ke lokasi titik baca untuk membaca e-book.'
+                    'Anda berada di luar area zona baca. Silakan datang ke lokasi zona baca untuk membaca e-book.'
                 );
             }
         }
