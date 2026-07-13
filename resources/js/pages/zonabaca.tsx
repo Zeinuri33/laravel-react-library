@@ -741,7 +741,8 @@ export default function ZonaBacaPage({
                             </motion.div>
                         )}
 
-                        {/* Search bar - prominent in hero */}
+                        {/* Search bar - prominent in hero (hidden if outside zona baca) */}
+                        {!diluarArea && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -775,11 +776,12 @@ export default function ZonaBacaPage({
                                 />
                             </div>
                         </motion.div>
+                        )}
                     </div>
                 </section>
 
                 {/* ============ POPULAR SECTION ============ */}
-                {popularEbooks.length > 0 && !searchQuery && selectedKategori.length === 0 && (
+                {!diluarArea && popularEbooks.length > 0 && !searchQuery && selectedKategori.length === 0 && (
                     <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-10">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -897,6 +899,49 @@ export default function ZonaBacaPage({
                 )}
 
                 {/* ============ ALL EBOOKS SECTION ============ */}
+                {diluarArea ? (
+                    <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className="flex flex-col items-center justify-center rounded-2xl border border-orange-100 py-32 dark:border-orange-900/30"
+                        >
+                            <div className="rounded-full bg-orange-50 p-6 dark:bg-orange-900/20">
+                                <MapPin className="h-12 w-12 text-orange-400 dark:text-orange-500" />
+                            </div>
+                            <h3 className="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
+                                Di Luar Area Zona Baca
+                            </h3>
+                            <p className="mt-3 max-w-md text-center text-sm text-gray-400 dark:text-gray-500">
+                                Untuk mengakses dan membaca koleksi e-book, silakan datang ke
+                                lokasi zona baca terdekat. Pastikan perangkat Anda berada di dalam
+                                area zona baca yang telah ditentukan.
+                            </p>
+                            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                                {titiks
+                                    .filter((t) => t.is_active)
+                                    .slice(0, 3)
+                                    .map((t) => (
+                                        <div
+                                            key={t.id}
+                                            className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white px-4 py-2.5 shadow-sm dark:border-gray-800 dark:bg-slate-900"
+                                        >
+                                            <MapPin className={`h-3.5 w-3.5 ${tc.text}`} />
+                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                {t.nama}
+                                            </span>
+                                        </div>
+                                    ))}
+                            </div>
+                            {titiks.filter((t) => t.is_active).length > 3 && (
+                                <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+                                    dan {titiks.filter((t) => t.is_active).length - 3} zona baca lainnya
+                                </p>
+                            )}
+                        </motion.div>
+                    </section>
+                ) : (
                 <section id="all-ebooks" className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
                     {/* Section Header — full width, same style as Populer */}
                     <motion.div
@@ -1436,6 +1481,7 @@ export default function ZonaBacaPage({
                         </div>
                     </div>
                 </section>
+                )}
 
                 {/* ============ FOOTER ============ */}
                 <Footer
