@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\BookSearchController;
 use App\Http\Controllers\dokumentasi\DokumentasiController;
 use App\Http\Controllers\Ebook\EbookController;
 use App\Http\Controllers\Ebook\EbookKlasifikasiController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UsulanController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RepositoryController;
 
 Route::inertia('/', 'welcome')->name('home');
 Route::inertia('result', 'result')->name('result');
@@ -24,7 +26,8 @@ Route::post('/zonabaca/end-session', [EbookController::class, 'endSession']);
 
 //USULAN
 Route::post('/usulan', [UsulanController::class, 'store'])->name('usulan.store');
-
+Route::get('/api/repository-search', [RepositoryController::class, 'search']);
+Route::get('/api/search/books', [BookSearchController::class, 'searchBooks']);
 
 // Route::get('/test-search', function (DokumentasiSearchService $search) {
 //     return $search->search(

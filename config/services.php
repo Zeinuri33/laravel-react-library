@@ -34,5 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'opac' => [
+        'url' => env('OPAC_API_URL'),
+        'token' => env('OPAC_API_TOKEN'),
+    ],
 
 ];

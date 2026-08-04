@@ -10,8 +10,8 @@ import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 
 /* ================= OPAC CONFIG ================= */
-const OPAC_API = 'https://opac.ibrahimy.ac.id/api/BukuApiController.php';
-const OPAC_TOKEN = 'lib180597';
+// const OPAC_API = 'https://opac.ibrahimy.ac.id/api/BukuApiController.php';
+// const OPAC_TOKEN = 'lib180597';
 
 /* ================= HELPERS ================= */
 const highlight = (
@@ -252,32 +252,46 @@ export default function Result() {
     useEffect(() => {
         if (!query) return;
 
+        // Gunakan AbortController untuk membatalkan request jika user mengetik terlalu cepat
+        const abortController = new AbortController();
+
         const fetchBooks = async () => {
             setLoadingBooks(true);
             try {
-                // Tambahkan parameter &page=${pageBook}&limit=${perPage}
+                // Memanggil endpoint milik aplikasi Anda sendiri
                 const res = await fetch(
-                    `${OPAC_API}?token=${OPAC_TOKEN}&q=${query}&page=${pageBook}&limit=${perPage}`,
+                    `/api/search/books?q=${encodeURIComponent(query)}&page=${pageBook}&limit=${perPage}`,
+                    { signal: abortController.signal }
                 );
+
+                if (!res.ok) throw new Error('Network response was not ok');
+
                 const data = await res.json();
 
                 if (data.status === 'success') {
                     setBooks(data.data || []);
-                    setTotalBooks(data.total_data || 0); // Ambil total data dari API
+                    setTotalBooks(data.total_data || 0);
                 } else {
                     setBooks([]);
                     setTotalBooks(0);
                 }
-            } catch (e) {
-                console.error('BOOK ERROR:', e);
-                setBooks([]);
-                setTotalBooks(0);
+            } catch (e: any) {
+                if (e.name !== 'AbortError') {
+                    console.error('BOOK ERROR:', e);
+                    setBooks([]);
+                    setTotalBooks(0);
+                }
             } finally {
                 setLoadingBooks(false);
             }
         };
 
         fetchBooks();
+
+        return () => {
+            // Bersihkan request lama jika ada request baru (Cleanup function)
+            abortController.abort();
+        };
     }, [query, pageBook]);
 
     /* ================= FETCH ================= */

@@ -249,7 +249,7 @@ export default function Welcome() {
         {
             title: 'OPAC',
             desc: 'Cari buku dan koleksi perpustakaan dengan cepat.',
-            href: 'https://opac.lib.ibrahimy.ac.id/',
+            href: 'https://opac.ibrahimy.ac.id/',
             icon: Search,
         },
         {
