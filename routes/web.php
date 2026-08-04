@@ -7,7 +7,10 @@ use App\Http\Controllers\Ebook\EbookKlasifikasiController;
 use App\Http\Controllers\Ebook\TitikController;
 use App\Http\Controllers\Ebook\EbookUserController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ResourceGuideController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\universitas\FakultasController;
+use App\Http\Controllers\universitas\ProdiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UsulanController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +20,7 @@ use App\Http\Controllers\RepositoryController;
 Route::inertia('/', 'welcome')->name('home');
 Route::inertia('result', 'result')->name('result');
 Route::get('/docs/{slug?}', [DokumentasiController::class, 'docs']);
+Route::get('/resource-guides/{slug?}', [ResourceGuideController::class, 'publicIndex']);
 Route::get('/zonabaca', [EbookController::class, 'zonaBaca']);
 Route::get('/zonabaca/{ebook}/baca', [EbookController::class, 'baca']);
 Route::post('/zonabaca/verify-location', [EbookController::class, 'verifyLocation']);
@@ -101,6 +105,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
     )->name('dokumentasi.kategori.update');
 
 
+    /**
+     * Resource Guide
+     */
+
+    // INDEX
+    Route::get('/resource-guide', [ResourceGuideController::class, 'index'])
+        ->middleware('permission:lihat-resource-guide')
+        ->name('resource-guide.index');
+
+    // CREATE PAGE
+    Route::get('/resource-guide/create', [ResourceGuideController::class, 'create'])
+        ->middleware('permission:tambah-resource-guide')
+        ->name('resource-guide.create');
+
+    // STORE
+    Route::post('/resource-guide', [ResourceGuideController::class, 'store'])
+        ->middleware('permission:tambah-resource-guide')
+        ->name('resource-guide.store');
+
+    // EDIT PAGE
+    Route::get('/resource-guide/{resourceGuide}/edit', [ResourceGuideController::class, 'edit'])
+        ->middleware('permission:edit-resource-guide')
+        ->name('resource-guide.edit');
+
+    // UPDATE
+    Route::put('/resource-guide/{resourceGuide}', [ResourceGuideController::class, 'update'])
+        ->middleware('permission:edit-resource-guide')
+        ->name('resource-guide.update');
+
+    // DELETE
+    Route::delete('/resource-guide/{resourceGuide}', [ResourceGuideController::class, 'destroy'])
+        ->middleware('permission:hapus-resource-guide')
+        ->name('resource-guide.destroy');
+
+    // INSERT GAMBAR
+    Route::post('/resource-guide/upload-image', [ResourceGuideController::class, 'uploadImage']);
 
 
     // USULAN
@@ -173,6 +213,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ebook-users/{ebook_user}/edit', [EbookUserController::class, 'edit'])->middleware('permission:edit-ebook_user');
     Route::put('/ebook-users/{ebook_user}', [EbookUserController::class, 'update'])->middleware('permission:edit-ebook_user');
     Route::delete('/ebook-users/{ebook_user}', [EbookUserController::class, 'destroy'])->middleware('permission:hapus-ebook_user');
+
+
+    /**
+     * Universitas
+     */
+
+    // FAKULTAS
+    Route::get('/fakultas', [FakultasController::class, 'index'])
+        ->middleware('permission:lihat-fakultas')
+        ->name('fakultas.index');
+
+    Route::post('/fakultas', [FakultasController::class, 'store'])
+        ->middleware('permission:tambah-fakultas');
+
+    Route::put('/fakultas/{fakultas}', [FakultasController::class, 'update'])
+        ->middleware('permission:edit-fakultas')
+        ->name('fakultas.update');
+
+    Route::delete('/fakultas/{fakultas}', [FakultasController::class, 'destroy'])
+        ->middleware('permission:hapus-fakultas');
+
+    // PRODI
+    Route::get('/prodi', [ProdiController::class, 'index'])
+        ->middleware('permission:lihat-prodi')
+        ->name('prodi.index');
+
+    Route::post('/prodi', [ProdiController::class, 'store'])
+        ->middleware('permission:tambah-prodi');
+
+    Route::put('/prodi/{prodi}', [ProdiController::class, 'update'])
+        ->middleware('permission:edit-prodi')
+        ->name('prodi.update');
+
+    Route::delete('/prodi/{prodi}', [ProdiController::class, 'destroy'])
+        ->middleware('permission:hapus-prodi');
 
 
     /**

@@ -23,6 +23,9 @@ createInertiaApp({
     case name === 'docs' :
       return null;
 
+    case name === 'resource-guides':
+      return null;
+
     case name === 'zonabaca':
       return null;
 

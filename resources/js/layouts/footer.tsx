@@ -198,9 +198,18 @@ export default function Footer({ tc }: FooterProps) {
                                 <li>
                                     <a
                                         className={`transition-colors duration-300 ${tc.linkHover}`}
-                                        href="#"
+                                        href="/docs"
                                     >
                                         Panduan
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a
+                                        className={`transition-colors duration-300 ${tc.linkHover}`}
+                                        href="/resource-guides"
+                                    >
+                                        Resource Guide
                                     </a>
                                 </li>
 

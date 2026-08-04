@@ -5,10 +5,8 @@ import {
     LayoutGrid,
     Users,
     GraduationCap,
-    FileSearch,
-    Notebook,
     MessageCircleReply,
-    BookHeadphones,
+    BookMarked,
     MapPin
  } from 'lucide-react'
 import AppLogo from '@/components/app-logo'
@@ -61,11 +59,6 @@ export function AppSidebar() {
         ...(can('lihat-mahasiswa') ? [{ title: 'Mahasiswa', href: '/mahasiswa' }] : []),
     ]
 
-    const plagiasiChildren = [
-        ...(can('lihat-plagiasi_ta') ? [{ title: 'Tugas Akhir', href: '/cekplagiasi-ta' }] : []),
-        ...(can('lihat-plagiasi_nonta') ? [{ title: 'Non Tugas Akhir', href: '/cekplagiasi-nonta' }] : []),
-    ]
-
     const ebookChildren = [
         ...(can('lihat-ebook') ? [{ title: 'E-Book', href: '/list-ebooks' }] : []),
         ...(can('lihat-klasifikasi_ebook') ? [{ title: 'Klasifikasi', href: '/klasifikasi-ebooks' }] : []),                        ...(can('lihat-titik_ebook') ? [{ title: 'Zona Baca', href: '/titik-ebooks' }] : []),
@@ -92,6 +85,13 @@ export function AppSidebar() {
                     href: "/dokumentasi",
                     icon: BookOpen,
                 },
+                ...(can('lihat-resource-guide')
+                    ? [{
+                        title: 'Resource Guide',
+                        href: "/resource-guide",
+                        icon: BookMarked,
+                    }]
+                    : []),
                 {
                     title: 'Usulan',
                     href: "/usulan-list",

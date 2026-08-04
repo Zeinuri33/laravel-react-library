@@ -15,6 +15,7 @@ import {
     SearchCheck,
     BookAudio,
     Book,
+    BookMarked,
     FileText,
     Brain,
     ChevronDown,
@@ -263,6 +264,12 @@ export default function Welcome() {
             desc: 'Temukan dan baca e-book berdasarkan lokasi-lokasi zona baca.',
             href: '/zonabaca',
             icon: MapPin,
+        },
+        {
+            title: 'Resource Guide',
+            desc: 'Panduan sumber daya untuk setiap program studi.',
+            href: '/resource-guides',
+            icon: BookMarked,
         },
         {
             title: 'Jurnal Perpustakaan',

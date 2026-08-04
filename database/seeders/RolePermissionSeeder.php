@@ -34,6 +34,23 @@ class RolePermissionSeeder extends Seeder
             'tambah-akses',
             'edit-akses',
             'hapus-akses',
+
+            // Universitas
+            'lihat-fakultas',
+            'tambah-fakultas',
+            'edit-fakultas',
+            'hapus-fakultas',
+
+            'lihat-prodi',
+            'tambah-prodi',
+            'edit-prodi',
+            'hapus-prodi',
+
+            // Resource Guide
+            'lihat-resource-guide',
+            'tambah-resource-guide',
+            'edit-resource-guide',
+            'hapus-resource-guide',
         ];
 
         foreach ($permissions as $permission) {
@@ -51,7 +68,9 @@ class RolePermissionSeeder extends Seeder
         // ASSIGN PERMISSIONS
         // ======================
 
-        $admin->syncPermissions($permissions);
+        // ADDITIF: berikan permission tanpa menghapus permission lain
+        // yang sudah di-assign lewat UI (mis. lihat-dokumentasi, tambah-ebook).
+        $admin->givePermissionTo($permissions);
 
         $user->syncPermissions([
             'lihat-user',

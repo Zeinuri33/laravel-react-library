@@ -1,11 +1,32 @@
 "use client"
 
 import {
+    ImagePlus,
+    Link2,
+    Upload,
+    X,
+    Loader2,
+} from "lucide-react"
+import {
+    useEffect,
+    useRef,
+    useState,
+} from "react"
+import Heading from "@/components/heading"
+import { Button } from "@/components/ui/button"
+import {
     Dialog,
     DialogContent,
     DialogHeader,
 } from "@/components/ui/dialog"
 
+
+
+import { Input } from "@/components/ui/input"
+
+import { Label } from "@/components/ui/label"
+
+import { Separator } from "@/components/ui/separator"
 import {
     Tabs,
     TabsContent,
@@ -13,40 +34,21 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 
-import { Button } from "@/components/ui/button"
 
-import { Input } from "@/components/ui/input"
 
-import { Label } from "@/components/ui/label"
-
-import { Separator } from "@/components/ui/separator"
-
-import Heading from "@/components/heading"
-
-import {
-    ImagePlus,
-    Link2,
-    Upload,
-    X,
-    Loader2,
-} from "lucide-react"
-
-import {
-    useEffect,
-    useRef,
-    useState,
-} from "react"
 
 interface Props {
     open: boolean
     onClose: () => void
     onInsert: (url: string) => void
+    uploadUrl?: string
 }
 
 export default function ImageModal({
     open,
     onClose,
     onInsert,
+    uploadUrl = "/dokumentasi/upload-image",
 }: Props) {
 
     const [tab, setTab] =
@@ -91,7 +93,9 @@ export default function ImageModal({
 
         const file = e.target.files?.[0]
 
-        if (!file) return
+        if (!file) {
+return
+}
 
         setPreview(
             URL.createObjectURL(file)
@@ -106,7 +110,7 @@ export default function ImageModal({
             setUploading(true)
 
             const response = await fetch(
-                "/dokumentasi/upload-image",
+                uploadUrl,
                 {
                     method: "POST",
 
@@ -242,7 +246,9 @@ export default function ImageModal({
                             className="w-full"
                             onClick={() => {
 
-                                if (!url) return
+                                if (!url) {
+return
+}
 
                                 onInsert(url)
 
