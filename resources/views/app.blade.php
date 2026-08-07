@@ -4,6 +4,16 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        {{-- PWA meta tags --}}
+        <meta name="description" content="Perpustakaan digital Ibrahimy: baca ebook, dokumentasi, resource guide, dan zona baca di mana saja.">
+        <meta name="theme-color" content="#22c55e">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Digilib">
+
+        <link rel="manifest" href="/manifest.json">
+
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>
             (function() {
@@ -37,7 +47,7 @@ html.dark {
         </style>
 
         <link rel="icon" href="/logo-perpus.png" type="image/png" sizes="any">
-        <link rel="apple-touch-icon" href="/logo-perpus.png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
