@@ -27,7 +27,13 @@ type EbookData = {
     total_menit_baca: number;
 };
 
-export default function BacaEbook({ ebook }: { ebook: EbookData }) {
+export default function BacaEbook({
+    ebook,
+    preVerified = false,
+}: {
+    ebook: EbookData;
+    preVerified?: boolean;
+}) {
     const [numPages, setNumPages] = useState<number>(0);
     const [pageNumber, setPageNumber] = useState(1);
     const [scale, setScale] = useState(1.0);
@@ -37,6 +43,11 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showNavbars, setShowNavbars] = useState(true);
     const [locationChecking, setLocationChecking] = useState(false);
+    // URL PDF bersih tanpa koordinat; verifikasi lokasi perangkat sudah
+    // disimpan di session oleh backend (preVerified) atau diverifikasi di sini.
+    const [pdfUrl, setPdfUrl] = useState<string | null>(() =>
+        preVerified && ebook.file ? ebook.file : null
+    );
     const hideNavbarsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [sessionDuration, setSessionDuration] = useState(0);
@@ -50,26 +61,23 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
     const pageDimensionsRef = useRef<{ width: number; height: number } | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Verify location on mount
+    // Verify device location on mount (if not already verified in session)
     useEffect(() => {
+        // Sudah terverifikasi oleh halaman zonabaca — langsung pakai PDF
+        if (preVerified) {
+            setLocationChecking(false);
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            toast.error('Browser Anda tidak mendukung geolokasi');
+            router.visit('/zonabaca');
+            return;
+        }
+
+        setLocationChecking(true);
+
         const verifyLocationOnMount = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const lat = urlParams.get('lat');
-            const lng = urlParams.get('lng');
-
-            if (lat && lng) {
-                // Location already verified by zonabaca page and backend baca method
-                setLocationChecking(false);
-                return;
-            }
-
-            // No location data — try to get it now
-            if (!navigator.geolocation) {
-                toast.error('Browser Anda tidak mendukung geolokasi');
-                router.visit('/zonabaca');
-                return;
-            }
-
             try {
                 const position = await new Promise<GeolocationPosition>((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -96,7 +104,10 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                 const data = await response.json();
 
                 if (data.allowed) {
-                    setLocationChecking(false);
+                    // Backend menyimpan verifikasi di session; PDF bisa dimuat
+                    if (ebook.file) {
+                        setPdfUrl(ebook.file);
+                    }
                 } else {
                     toast.error(data.message, { duration: 6000 });
                     router.visit('/zonabaca');
@@ -121,21 +132,18 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
     useEffect(() => { pageNumberRef.current = pageNumber; }, [pageNumber]);
     useEffect(() => { numPagesRef.current = numPages; }, [numPages]);
 
-    // Start reading session
+    // Start reading session — hanya setelah pdfUrl tersedia (lokasi terverifikasi),
+    // sehingga percobaan gagal / di luar zona tidak menambah statistik.
     useEffect(() => {
-        if (!ebook.file) return;
+        if (!pdfUrl || !ebook.file) return;
 
         const startSession = async () => {
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const titikId = urlParams.get('titik_id');
-
                 const res = await fetch('/zonabaca/start-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '' },
                     body: JSON.stringify({
                         ebook_id: ebook.id,
-                        titik_baca_id: titikId ? parseInt(titikId) : null,
                     }),
                 });
                 const data = await res.json();
@@ -161,7 +169,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                 );
             }
         };
-    }, [ebook.id]);
+    }, [pdfUrl, ebook.id]);
 
     // Heartbeat every 15 seconds
     const sendHeartbeat = useCallback(() => {
@@ -610,12 +618,13 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                         ? 'min-h-screen items-center py-0 px-0'
                         : 'py-6 px-4'
                 }`}>
-                    {loading && (
+                    {(!pdfUrl || loading) && (
                         <div className="flex items-center justify-center py-32">
                             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
                         </div>
                     )}
 
+                    {pdfUrl && (
                     <div
                         ref={viewerRef}
                         onMouseDown={(e) => {
@@ -651,11 +660,19 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                         className="w-full"
                     >
                         <Document
-                            file={ebook.file}
+                            file={pdfUrl}
                             onLoadSuccess={onDocumentLoadSuccess}
-                            onLoadError={(error) => {
+                            onLoadError={(error: any) => {
                                 console.error('PDF load error:', error);
                                 setLoading(false);
+
+                                // Verifikasi kedaluwarsa (403) → coba verifikasi ulang
+                                if (error?.status === 403) {
+                                    toast.error('Verifikasi lokasi kedaluwarsa. Memeriksa ulang lokasi Anda...', {
+                                        duration: 4000,
+                                    });
+                                    router.visit('/zonabaca');
+                                }
                             }}
                             className="flex flex-col items-center"
                             loading={
@@ -866,6 +883,7 @@ export default function BacaEbook({ ebook }: { ebook: EbookData }) {
                             )}
                         </Document>
                     </div>
+                    )}
                 </div>
 
                 </div>{/* END MAIN CONTENT WRAPPER */}

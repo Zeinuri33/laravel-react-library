@@ -27,6 +27,7 @@ import Footer from '@/layouts/footer';
 
 type Ebook = {
     id: number;
+    slug?: string;
     cover: string | null;
     file: string | null;
     judul: string;
@@ -187,7 +188,7 @@ export default function ZonaBacaPage({
         });
     };
 
-    const handleReadEbook = useCallback(async (ebookId: number) => {
+    const handleReadEbook = useCallback(async (ebook: Ebook) => {
         if (!navigator.geolocation) {
             toast.error('Browser Anda tidak mendukung geolokasi');
             return;
@@ -223,12 +224,10 @@ export default function ZonaBacaPage({
             toast.dismiss(loadingToast);
 
             if (data.allowed) {
-                const titikId = data.titik?.id;
-                let url = `/zonabaca/${ebookId}/baca?lat=${latitude}&lng=${longitude}`;
-                if (titikId) {
-                    url += `&titik_id=${titikId}`;
-                }
-                router.visit(url);
+                // URL bersih tanpa koordinat — aman untuk dibagikan.
+                // Pakai slug dari judul bila ada, fallback ke ID.
+                // Verifikasi lokasi disimpan di session oleh backend.
+                router.visit(`/zonabaca/${ebook.slug || ebook.id}/baca`);
             } else {
                 toast.error(data.message, { duration: 6000 });
             }
@@ -820,6 +819,18 @@ export default function ZonaBacaPage({
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: i * 0.08, duration: 0.4 }}
+                                        onClick={() => {
+                                            if (ebook.file) handleReadEbook(ebook);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (ebook.file && (e.key === 'Enter' || e.key === ' ')) {
+                                                e.preventDefault();
+                                                handleReadEbook(ebook);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={ebook.file ? `Baca ${ebook.judul}` : undefined}
                                         className="group relative cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl dark:border-gray-800 dark:bg-slate-900"
                                     >
                                         <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
@@ -835,17 +846,33 @@ export default function ZonaBacaPage({
                                                     <BookOpen className="h-10 w-10 text-gray-200 dark:text-gray-700" />
                                                 </div>
                                             )}
-                                            {/* Overlay */}
-                                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/50 via-black/20 to-transparent opacity-0 transition-all duration-300 group-hover:opacity-100">
+                                            {/* Overlay (desktop hover) */}
+                                            <div className="absolute inset-0 hidden items-center justify-center bg-gradient-to-t from-black/50 via-black/20 to-transparent opacity-0 transition-all duration-300 group-hover:opacity-100 md:flex">
                                                 {ebook.file && (
                                                     <button
-                                                        onClick={() => handleReadEbook(ebook.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleReadEbook(ebook);
+                                                        }}
                                                         className={`translate-y-4 scale-90 rounded-lg px-4 py-2 text-xs font-semibold text-white shadow-lg opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient} cursor-pointer`}
                                                     >
                                                         Baca
                                                     </button>
                                                 )}
                                             </div>
+                                            {/* Tombol Baca khusus mobile — selalu terlihat tanpa hover */}
+                                            {ebook.file && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleReadEbook(ebook);
+                                                    }}
+                                                    className={`absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white shadow-lg md:hidden ${tc.bgGradient}`}
+                                                >
+                                                    <BookOpen className="h-3 w-3" />
+                                                    Baca
+                                                </button>
+                                            )}
                                             {/* Category badge */}
                                             {ebook.klasifikasi?.kategori && (
                                                 <span
@@ -858,10 +885,11 @@ export default function ZonaBacaPage({
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault();
+                                                    e.stopPropagation();
                                                     toggleBookmark(ebook.id);
                                                 }}
                                                 aria-label="Tandai e-book"
-                                                className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 opacity-0 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 group-hover:opacity-100 dark:bg-slate-900/80 ${
+                                                className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 opacity-100 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-110 md:opacity-0 md:group-hover:opacity-100 dark:bg-slate-900/80 ${
                                                     bookmarkedIds.has(ebook.id) ? 'opacity-100' : ''
                                                 }`}
                                             >
@@ -1338,7 +1366,19 @@ export default function ZonaBacaPage({
                                         <motion.div
                                             key={ebook.id}
                                             variants={cardVariants}
-                                            className={`group relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl dark:border-gray-800 dark:bg-slate-900 ${tc.cardBorder}`}
+                                            onClick={() => {
+                                                if (ebook.file) handleReadEbook(ebook);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (ebook.file && (e.key === 'Enter' || e.key === ' ')) {
+                                                    e.preventDefault();
+                                                    handleReadEbook(ebook);
+                                                }
+                                            }}
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label={ebook.file ? `Baca ${ebook.judul}` : undefined}
+                                            className={`group relative cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl dark:border-gray-800 dark:bg-slate-900 ${tc.cardBorder}`}
                                         >
                                             {/* Cover */}
                                             <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
@@ -1355,17 +1395,33 @@ export default function ZonaBacaPage({
                                                     </div>
                                                 )}
 
-                                                {/* Hover overlay with CTA */}
-                                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100">
+                                                {/* Hover overlay with CTA (desktop) */}
+                                                <div className="absolute inset-0 hidden items-center justify-center bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100 md:flex">
                                                     {ebook.file && (
                                                         <button
-                                                            onClick={() => handleReadEbook(ebook.id)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleReadEbook(ebook);
+                                                            }}
                                                             className={`translate-y-6 scale-90 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-lg opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 ${tc.bgGradient} ${tc.shadow} cursor-pointer`}
                                                         >
                                                             Baca
                                                         </button>
                                                     )}
                                                 </div>
+                                                {/* Tombol Baca khusus mobile — selalu terlihat tanpa hover */}
+                                                {ebook.file && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleReadEbook(ebook);
+                                                        }}
+                                                        className={`absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white shadow-lg md:hidden ${tc.bgGradient}`}
+                                                    >
+                                                        <BookOpen className="h-3 w-3" />
+                                                        Baca
+                                                    </button>
+                                                )}
 
                                                 {/* Category badge */}
                                                 {ebook.klasifikasi?.kategori && (
@@ -1380,10 +1436,11 @@ export default function ZonaBacaPage({
                                                 <button
                                                     onClick={(e) => {
                                                         e.preventDefault();
+                                                        e.stopPropagation();
                                                         toggleBookmark(ebook.id);
                                                     }}
                                                     aria-label="Tandai e-book"
-                                                    className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/70 opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100 dark:bg-slate-900/70 dark:hover:bg-slate-900 ${
+                                                    className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/70 opacity-100 shadow-sm backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white md:opacity-0 md:group-hover:opacity-100 dark:bg-slate-900/70 dark:hover:bg-slate-900 ${
                                                         bookmarkedIds.has(ebook.id) ? 'opacity-100' : ''
                                                     }`}
                                                 >
