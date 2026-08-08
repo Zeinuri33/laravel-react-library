@@ -678,24 +678,7 @@ export default function Welcome() {
                                 ease: 'easeOut',
                             }}
                         >
-                            <div className="relative mx-auto w-[1000px] max-w-full transition-transform duration-700 hover:scale-[1.02]">
-                                {/* Glow behind image */}
-                                <div
-                                    className={`absolute -inset-2 bg-gradient-to-r opacity-40 blur-3xl dark:opacity-20 ${tc.glow}`}
-                                ></div>
-
-                                <img
-                                    src="/digilib.png"
-                                    alt="Digilib Light"
-                                    className="relative mx-auto w-full rounded-3xl border border-white/40 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-shadow duration-500 hover:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.2)] dark:hidden"
-                                />
-
-                                <img
-                                    src="/digilib-dark.png"
-                                    alt="Digilib Dark"
-                                    className="relative mx-auto hidden w-full rounded-3xl border border-gray-800/60 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] transition-shadow duration-500 hover:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.5)] dark:block"
-                                />
-                            </div>
+                            
                         </motion.div>
                     </motion.div>
 
