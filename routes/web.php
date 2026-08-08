@@ -23,7 +23,6 @@ Route::get('/docs/{slug?}', [DokumentasiController::class, 'docs']);
 Route::get('/resource-guides/{slug?}', [ResourceGuideController::class, 'publicIndex']);
 Route::get('/zonabaca', [EbookController::class, 'zonaBaca']);
 Route::get('/zonabaca/{ebook}/baca', [EbookController::class, 'baca']);
-Route::get('/zonabaca/{ebook}/pdf', [EbookController::class, 'pdf'])->name('zonabaca.pdf');
 Route::post('/zonabaca/verify-location', [EbookController::class, 'verifyLocation']);
 Route::post('/zonabaca/start-session', [EbookController::class, 'startSession']);
 Route::post('/zonabaca/heartbeat', [EbookController::class, 'heartbeat']);

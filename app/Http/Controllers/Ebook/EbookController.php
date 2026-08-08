@@ -11,19 +11,12 @@ use App\Models\Ebooks\Ebook;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Smalot\PdfParser\Parser;
 use Spatie\PdfToImage\Pdf;
 
 class EbookController extends Controller
 {
-    /**
-     * Masa berlaku verifikasi lokasi perangkat di session (detik).
-     * Disegarkan oleh heartbeat selama sesi membaca aktif.
-     */
-    private const ZONA_VERIFICATION_TTL = 1800;
-
     public function extract(Request $request)
     {
         $request->validate([
@@ -315,16 +308,12 @@ class EbookController extends Controller
 
             if (Storage::disk('public')->exists($oldPath)) {
 
+                Storage::disk('public')->makeDirectory('ebooks/pdfs');
+
                 $newName = Str::uuid() . '.pdf';
                 $newPath = 'ebooks/pdfs/' . $newName;
 
-                // Simpan ke disk privat (bukan storage publik) agar tidak bisa
-                // diakses langsung lewat URL /storage/...
-                Storage::disk('local')->writeStream(
-                    $newPath,
-                    Storage::disk('public')->readStream($oldPath)
-                );
-                Storage::disk('public')->delete($oldPath);
+                Storage::disk('public')->move($oldPath, $newPath);
 
                 $filePath = $newPath;
             }
@@ -431,9 +420,9 @@ class EbookController extends Controller
                 'klasifikasi_id' => $ebook->klasifikasi_id,
                 'deskripsi' => $ebook->deskripsi,
 
-                // URL preview (signed URL sementara — bukan storage publik)
+                // URL preview
                 'file' => $ebook->file
-                    ? URL::temporarySignedRoute('zonabaca.pdf', now()->addHour(), ['ebook' => $ebook->id])
+                    ? Storage::url($ebook->file)
                     : null,
 
                 'cover' => $ebook->cover
@@ -475,18 +464,17 @@ class EbookController extends Controller
         if (!empty($validated['file_path'])) {
             $oldTempPdf = $validated['file_path'];
             if (Storage::disk('public')->exists($oldTempPdf)) {
+                // hapus pdf lama
+                if ($ebook->file) {
+                    Storage::disk('public')->delete($ebook->file);
+                }
                 $newPdfName = Str::uuid() . '.pdf';
                 $newPdfPath = 'ebooks/pdfs/' . $newPdfName;
-
-                // Simpan file baru ke disk privat terlebih dahulu,
-                // baru hapus yang lama (hindari kehilangan data jika gagal)
-                Storage::disk('local')->writeStream(
-                    $newPdfPath,
-                    Storage::disk('public')->readStream($oldTempPdf)
+                Storage::disk('public')->makeDirectory('ebooks/pdfs');
+                Storage::disk('public')->move(
+                    $oldTempPdf,
+                    $newPdfPath
                 );
-                Storage::disk('public')->delete($oldTempPdf);
-                $this->deleteEbookFile($ebook->file);
-
                 $filePath = $newPdfPath;
             }
         }
@@ -590,39 +578,6 @@ class EbookController extends Controller
         $latitude = (float) $validated['latitude'];
         $longitude = (float) $validated['longitude'];
 
-        $titik = $this->findTitikInZona($latitude, $longitude);
-
-        if ($titik) {
-            $distance = $this->haversineDistance(
-                $latitude,
-                $longitude,
-                (float) $titik->latitude,
-                (float) $titik->longitude
-            );
-
-            // Simpan verifikasi lokasi perangkat ke session (bukan di URL),
-            // agar URL e-book bisa dibagikan tanpa membocorkan koordinat.
-            session([
-                'zonabaca_verified' => true,
-                'zonabaca_verified_at' => now()->timestamp,
-                'zonabaca_titik_id' => $titik->id,
-            ]);
-
-            return response()->json([
-                'allowed' => true,
-                'message' => 'Lokasi Anda berada dalam area zona baca: ' . $titik->nama,
-                'titik' => [
-                    'id' => $titik->id,
-                    'nama' => $titik->nama,
-                    'jarak' => round($distance, 1),
-                ],
-            ]);
-        }
-
-        // Tidak berada di area mana pun — cabut verifikasi yang lama
-        session()->forget(['zonabaca_verified', 'zonabaca_verified_at', 'zonabaca_titik_id']);
-
-        // Cari zona terdekat untuk pesan bantuan pengguna
         $titiks = Ebook_titik_baca::where('is_active', true)->get();
 
         $nearestTitik = null;
@@ -635,6 +590,18 @@ class EbookController extends Controller
                 (float) $titik->latitude,
                 (float) $titik->longitude
             );
+
+            if ($distance <= $titik->radius) {
+                return response()->json([
+                    'allowed' => true,
+                    'message' => 'Lokasi Anda berada dalam area zona baca: ' . $titik->nama,
+                    'titik' => [
+                        'id' => $titik->id,
+                        'nama' => $titik->nama,
+                        'jarak' => round($distance, 1),
+                    ],
+                ]);
+            }
 
             if ($distance < $minDistance) {
                 $minDistance = $distance;
@@ -674,10 +641,6 @@ class EbookController extends Controller
 
     public function baca(Ebook $ebook)
     {
-        // Lokasi perangkat diverifikasi lewat /zonabaca/verify-location yang
-        // menyimpan hasilnya di session. URL halaman ini bersih (tanpa lat/lng)
-        // sehingga aman untuk dibagikan.
-
         $ebook->load('klasifikasi');
         $ebook->loadCount('bacaHistories');
 
@@ -694,25 +657,16 @@ class EbookController extends Controller
                 'tahun_terbit' => $ebook->tahun_terbit,
                 'deskripsi' => $ebook->deskripsi,
                 'cover' => $ebook->cover ? asset('storage/' . $ebook->cover) : null,
-                // File PDF dialirkan lewat route /zonabaca/{id}/pdf yang
-                // memverifikasi lokasi di backend — bukan URL storage publik.
-                'file' => $ebook->file ? url('/zonabaca/' . $ebook->id . '/pdf') : null,
+                'file' => $ebook->file ? asset('storage/' . $ebook->file) : null,
                 'klasifikasi' => $ebook->klasifikasi,
                 'total_dibaca' => $ebook->baca_histories_count,
                 'total_menit_baca' => $totalMenit,
             ],
-            'preVerified' => $this->isDeviceVerified(),
         ]);
     }
 
     public function startSession(Request $request)
     {
-        // Hanya perangkat yang sudah terverifikasi lokasinya yang boleh
-        // memulai sesi membaca (cegah penggelembungan statistik).
-        if (!$this->isDeviceVerified()) {
-            abort(403, 'Lokasi perangkat belum terverifikasi.');
-        }
-
         $validated = $request->validate([
             'ebook_id' => ['required', 'exists:ebooks,id'],
             'titik_baca_id' => ['nullable', 'exists:ebook_titik_bacas,id'],
@@ -722,7 +676,7 @@ class EbookController extends Controller
 
         $history = EbookBacaHistory::create([
             'ebook_id' => $validated['ebook_id'],
-            'titik_baca_id' => $validated['titik_baca_id'] ?? session('zonabaca_titik_id'),
+            'titik_baca_id' => $validated['titik_baca_id'] ?? null,
             'session_id' => $sessionId,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
@@ -734,123 +688,6 @@ class EbookController extends Controller
             'session_id' => $sessionId,
             'history_id' => $history->id,
         ]);
-    }
-
-    /**
-     * Alirkan file PDF melalui backend. Akses hanya diizinkan jika:
-     * 1. Perangkat sudah diverifikasi lokasinya (session), ATAU
-     * 2. Request memakai signed URL (untuk preview admin di halaman edit).
-     */
-    public function pdf(Request $request, Ebook $ebook)
-    {
-        // Preview admin via signed URL (expired setelah 1 jam)
-        if ($request->hasValidSignature()) {
-            return $this->streamEbookFile($ebook);
-        }
-
-        if (!$this->isDeviceVerified()) {
-            abort(403, 'Lokasi perangkat belum terverifikasi. Silakan buka e-book melalui halaman zona baca.');
-        }
-
-        return $this->streamEbookFile($ebook);
-    }
-
-    /**
-     * Cek apakah perangkat sudah melewati verifikasi lokasi zona baca
-     * (hasilnya disimpan di session, berlaku sementara & disegarkan oleh
-     * heartbeat selama sesi membaca aktif).
-     */
-    private function isDeviceVerified(): bool
-    {
-        if (!session('zonabaca_verified')) {
-            return false;
-        }
-
-        $verifiedAt = (int) session('zonabaca_verified_at', 0);
-
-        return (now()->timestamp - $verifiedAt) <= self::ZONA_VERIFICATION_TTL;
-    }
-
-    /**
-     * Cari zona baca aktif pertama yang mencakup koordinat yang diberikan.
-     */
-    private function findTitikInZona(float $latitude, float $longitude): ?Ebook_titik_baca
-    {
-        $titiks = Ebook_titik_baca::where('is_active', true)->get();
-
-        foreach ($titiks as $titik) {
-            $distance = $this->haversineDistance(
-                $latitude,
-                $longitude,
-                (float) $titik->latitude,
-                (float) $titik->longitude
-            );
-
-            if ($distance <= $titik->radius) {
-                return $titik;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Alirkan file PDF dari disk privat. File lama (legacy) yang masih di
-     * disk publik otomatis dipindahkan ke disk privat saat pertama diakses.
-     * Gunakan response()->file() (BinaryFileResponse) agar mendukung
-     * HTTP Range requests yang dipakai pdf.js.
-     */
-    private function streamEbookFile(Ebook $ebook)
-    {
-        if (!$ebook->file) {
-            abort(404);
-        }
-
-        // File baru tersimpan di disk privat (storage/app/private)
-        if (Storage::disk('local')->exists($ebook->file)) {
-            return $this->privateFileResponse($ebook->file);
-        }
-
-        // File lama yang masih di storage publik — migrasikan ke privat
-        if (Storage::disk('public')->exists($ebook->file)) {
-            Storage::disk('local')->writeStream(
-                $ebook->file,
-                Storage::disk('public')->readStream($ebook->file)
-            );
-            Storage::disk('public')->delete($ebook->file);
-
-            return $this->privateFileResponse($ebook->file);
-        }
-
-        abort(404);
-    }
-
-    /**
-     * Respons file dari disk privat dengan dukungan Range requests.
-     */
-    private function privateFileResponse(string $path)
-    {
-        return response()->file(storage_path('app/private/' . $path), [
-            'Content-Type' => 'application/pdf',
-        ]);
-    }
-
-    /**
-     * Hapus file dari semua disk (privat maupun publik legacy).
-     */
-    private function deleteEbookFile(?string $path): void
-    {
-        if (!$path) {
-            return;
-        }
-
-        if (Storage::disk('local')->exists($path)) {
-            Storage::disk('local')->delete($path);
-        }
-
-        if (Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
-        }
     }
 
     public function heartbeat(Request $request)
@@ -867,11 +704,6 @@ class EbookController extends Controller
 
         if (!$history) {
             return response()->json(['error' => 'Session not found'], 404);
-        }
-
-        // Segarkan verifikasi lokasi selama user masih aktif membaca
-        if (session('zonabaca_verified')) {
-            session(['zonabaca_verified_at' => now()->timestamp]);
         }
 
         $now = now();
@@ -940,7 +772,9 @@ class EbookController extends Controller
         // -----------------------------
         // HAPUS FILE PDF
         // -----------------------------
-        $this->deleteEbookFile($ebook->file);
+        if ($ebook->file && Storage::disk('public')->exists($ebook->file)) {
+            Storage::disk('public')->delete($ebook->file);
+        }
 
         // -----------------------------
         // HAPUS COVER
